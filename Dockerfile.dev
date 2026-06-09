@@ -1,0 +1,17 @@
+# backend/Dockerfile.dev
+FROM node:18-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=development
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Exponer puertos (app y debugging)
+EXPOSE 3001 9229
+
+# Comando con nodemon para hot reload
+CMD ["npm", "run", "dev"]
