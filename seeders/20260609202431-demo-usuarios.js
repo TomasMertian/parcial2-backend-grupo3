@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    // Cargue usuarios base para que podamos probar las rutas.
+    // usuarios base para que podamos probar las rutas
     await queryInterface.bulkInsert('Usuarios', [
       {
         nombre: 'Lucia Garcia',
@@ -23,7 +23,7 @@ module.exports = {
   },
 
   async down (queryInterface, Sequelize) {
-    // Para vaciar la tabla de usuarios por si hay que resetear la base de datos
+    // para vaciar la tabla de usuarios por si lo necesitamos
     await queryInterface.bulkDelete('Usuarios', null, {});
   }
 };
