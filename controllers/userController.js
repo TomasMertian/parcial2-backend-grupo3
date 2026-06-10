@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const Usuario = require('../models/User');
 
 //-------- POST /usuarios (1. Registrar) --------//
 const registrarUsuario = async(req, res) => {
@@ -6,7 +6,7 @@ const registrarUsuario = async(req, res) => {
         const {nombre, email, contraseña} = req.body;
 
         // Buscamos si el email ya existe en la Base de Datos
-        const existeUsuario = await User.findOne({where: {email}});
+        const existeUsuario = await Usuario.findOne({where: {email}});
 
         // Si existeUsuario tiene datos, corta la ejecución y da error 400
         if (existeUsuario) {
@@ -16,12 +16,12 @@ const registrarUsuario = async(req, res) => {
         }
 
         // Crear el usuario directamente en la Base de Datos
-        const nuevoUsuario = await User.create({nombre, email, contraseña});
+        const nuevoUsuario = await Usuario.create({nombre, email, contraseña});
 
         return res.status(201).json({
             msg: `Usuario registrado con éxito`,
             user: {
-                id: nuevoUsuario.id,
+                id_usuario: nuevoUsuario.id_usuario,
                 nombre: nuevoUsuario.nombre,
                 email: nuevoUsuario.email
             }
@@ -41,7 +41,7 @@ const obetenerUsuarioPorId = async (req, res) => {
         const {id} = req.params;
 
         // Busca el usuario mediante el id en la Base de Datos
-        const usuarioId = await User.findByPk(id);
+        const usuarioId = await Usuario.findByPk(id);
 
         // Control de existencia: Si no se encuentra, retorna un estado 404
         if (!usuarioId) {
@@ -71,7 +71,7 @@ const actualizarUsuario = async (req, res) => {
         const {nombre, email, contraseña} = req.body;
 
         // Busca al usuario en la Base de Datos
-        const usuarioOriginal = await User.findByPk(id);
+        const usuarioOriginal = await Usuario.findByPk(id);
 
         // Si no lo encuentra, retorna un estado 404
         if (!usuarioOriginal) {
@@ -82,10 +82,10 @@ const actualizarUsuario = async (req, res) => {
 
         // Si se intenta cambiar el email, verificar que no esté en uso por otro usuario
         // 1. Buscamos si alguien ya tiene ese email en la Base de Datos
-        const emailDuplicado = await User.findOne({where: {email} });
+        const emailDuplicado = await Usuario.findOne({where: {email} });
 
         // 2. Si SÍ se encuentra (existe), da error 400
-        if (emailDuplicado && emailDuplicado.id !== usuarioOriginal.id) {
+        if (emailDuplicado && emailDuplicado.id_usuario !== usuarioOriginal.id_usuario) {
             return res.status(400).json ({
                 msg: `El correo electrónico ${email} ya está en uso por otro usuario.`
             });
@@ -104,7 +104,7 @@ const actualizarUsuario = async (req, res) => {
         return res.status(200).json({
             msg: `Usuario modificado con éxito`,
             user: {
-                id: usuarioOriginal.id,
+                id_usuario: usuarioOriginal.id_usuario,
                 nombre: usuarioOriginal.nombre,
                 email: usuarioOriginal.email
             }
@@ -124,7 +124,7 @@ const eliminarUsuario = async (req,res) => {
         const {id} = req.params;
 
         // Comprueba si el usuario existe usando el id
-        const existeUsuario = await User.findByPk(id);
+        const existeUsuario = await Usuario.findByPk(id);
 
         // Si no existe, da un error 404 (not found) y corta la ejecución
         if (!existeUsuario) {
