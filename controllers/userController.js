@@ -1,4 +1,4 @@
-const Usuario = require('../models/User');
+const { Usuario } = require('../models/User');
 
 //-------- POST /usuarios (1. Registrar) --------//
 const registrarUsuario = async(req, res) => {
@@ -36,7 +36,7 @@ const registrarUsuario = async(req, res) => {
 };
 
 //-------- GET /usuarios/:id (2. Ver detalle) --------//
-const obetenerUsuarioPorId = async (req, res) => {
+const obtenerUsuarioPorId = async (req, res) => {
     try {
         const {id} = req.params;
 
@@ -152,7 +152,7 @@ const eliminarUsuario = async (req,res) => {
 
 module.exports = {
     registrarUsuario,
-    obetenerUsuarioPorId,
+    obtenerUsuarioPorId,
     actualizarUsuario,
     eliminarUsuario
 };
