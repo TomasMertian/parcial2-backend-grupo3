@@ -72,7 +72,78 @@ const obtenerColeccionUsuario = async (req, res) => {
   }
 };
 
+// ------- PUT /coleccion/:id_usuario/:id_videojuego (3. Actualizar) --------//
+const actualizarJuegoColeccion = async (req, res) => {
+  try {
+    const { id_usuario, id_videojuego } = req.params;
+    const { estado, calificacion, tiempo_juego } = req.body;
+
+    const juego = await ColeccionUsuario.findOne({
+      where: {
+        usuario_id: id_usuario,
+        videojuego_id: id_videojuego,
+      },
+    });
+
+    if (!juego) {
+      return res.status(404).json({
+        msg: "Juego no encontrado en la colección",
+      });
+    }
+
+    await juego.update({
+      estado,
+      calificacion,
+      tiempo_juego,
+    });
+
+    return res.status(200).json({
+      msg: "Juego actualizado correctamente",
+      juego,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: "Error al actualizar juego",
+    });
+  }
+};
+
+// ------- DELETE /coleccion/:id_usuario/:id_videojuego (4. Eliminar) --------//
+const eliminarJuegoColeccion = async (req, res) => {
+  try {
+    const { id_usuario, id_videojuego } = req.params;
+
+    const juego = await ColeccionUsuario.findOne({
+      where: {
+        usuario_id: id_usuario,
+        videojuego_id: id_videojuego,
+      },
+    });
+
+    if (!juego) {
+      return res.status(404).json({
+        msg: "Juego no encontrado en la colección",
+      });
+    }
+
+    await juego.destroy();
+
+    return res.status(200).json({
+      msg: "Juego eliminado de la colección",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: "Error al eliminar juego",
+    });
+  }
+};
+
+
 module.exports = {
   agregarAColeccion,
   obtenerColeccionUsuario,
+  actualizarJuegoColeccion,
+  eliminarJuegoColeccion
 };

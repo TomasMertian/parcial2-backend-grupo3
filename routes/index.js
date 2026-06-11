@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
+const coleccionRoutes = require('./coleccionUsuarioRoutes');
+const videojuegoRoutes = require('./videojuegoRoutes');
+const userRoutes = require('./userRoutes');
+
 router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -20,5 +24,9 @@ router.get('/test', (req, res) => {
     }
   });
 });
+
+router.use('/coleccion', coleccionRoutes);
+router.use('/videojuegos', videojuegoRoutes);
+router.use('/usuarios', userRoutes);
 
 module.exports = router;
