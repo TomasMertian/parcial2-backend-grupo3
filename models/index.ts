@@ -38,15 +38,15 @@ const ColeccionUsuario = coleccionUsuarioFactory(sequelize);
 
 Usuario.belongsToMany(Videojuego, {
   through: ColeccionUsuario,
-  foreignKey: 'usuario_id'
+  foreignKey: 'id_usuario'
 });
 Videojuego.belongsToMany(Usuario, {
   through: ColeccionUsuario,
   foreignKey: 'videojuego_id'
 });
-ColeccionUsuario.belongsTo(Usuario, { foreignKey: 'usuario_id' });
+ColeccionUsuario.belongsTo(Usuario, { foreignKey: 'id_usuario' });
 ColeccionUsuario.belongsTo(Videojuego, { foreignKey: 'videojuego_id' });
-Usuario.hasMany(ColeccionUsuario, { foreignKey: 'usuario_id' });
+Usuario.hasMany(ColeccionUsuario, { foreignKey: 'id_usuario' });
 Videojuego.hasMany(ColeccionUsuario, { foreignKey: 'videojuego_id' });
 
 export {
