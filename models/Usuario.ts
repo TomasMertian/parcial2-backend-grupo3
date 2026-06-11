@@ -27,11 +27,14 @@ export default (sequelize: Sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: false
     },
-    email: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-      unique: true
-    },
+  email: {
+    type: DataTypes.STRING(255),
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  },
     contraseña: {
       type: DataTypes.STRING(255),
       allowNull: false
