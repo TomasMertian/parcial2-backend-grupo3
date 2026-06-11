@@ -12,7 +12,8 @@ module.exports = {
           model: 'Users',
           key:'id_usuario'
         },
-        
+        onDelete : 'CASCADE',
+        onUpdate : 'CASCADE'
        },
        id_videojuego:{
         type: Sequelize.INTEGER,
@@ -21,7 +22,9 @@ module.exports = {
         references:{
           model: 'Videojuegos',
           key:'id_videojuego'
-        }
+        },
+        onDelete : 'CASCADE',
+        onUpdate : 'CASCADE'
        },
        tiempo_jugado:{
         type : Sequelize.INTEGER,
