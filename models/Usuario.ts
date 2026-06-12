@@ -27,12 +27,12 @@ export default (sequelize: Sequelize) => {
       type: DataTypes.STRING(100),
       allowNull: false
     },
-  email: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
-    unique: true,
-    validate: {
-      isEmail: true
+    email: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true
     }
   },
     password: {
@@ -42,7 +42,7 @@ export default (sequelize: Sequelize) => {
   }, {
     sequelize,
     modelName: 'Usuario',
-    tableName: 'usuario',
+    tableName: 'Users',
     timestamps: true
   });
   return Usuario;

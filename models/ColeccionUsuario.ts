@@ -8,7 +8,7 @@ export enum EstadoJuego {
 
 export interface ColeccionUsuarioAttributes {
   id_usuario: number;
-  videojuego_id: number;
+  id_videojuego: number;
   estado: EstadoJuego;
   calificacion: number;
   tiempo_jugado: number;
@@ -18,7 +18,7 @@ export interface ColeccionUsuarioCreationAttributes extends Partial<ColeccionUsu
 
 class ColeccionUsuario extends Model<ColeccionUsuarioAttributes, ColeccionUsuarioCreationAttributes> {
   declare id_usuario: number;
-  declare videojuego_id: number;
+  declare id_videojuego: number;
   declare estado: EstadoJuego;
   declare calificacion: number;
   declare tiempo_jugado: number;
@@ -29,18 +29,16 @@ export default (sequelize: Sequelize) => {
     id_usuario: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      references: { model: 'usuario', key: 'id_usuario' }
+      references: { model: 'Users', key: 'id_usuario' }
     },
-    videojuego_id: {
+    id_videojuego: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      references: { model: 'videojuegos', key: 'id_videojuego' }
+      references: { model: 'Videojuegos', key: 'id_videojuego' }
     },
     estado: {
       type: DataTypes.STRING(50),
-      validate: {
-        isIn: [[EstadoJuego.JUGANDO, EstadoJuego.EN_PROGRESO, EstadoJuego.COMPLETADO]]
-      }
+      defaultValue: 'Sin_jugar'
     },
     calificacion: {
       type: DataTypes.FLOAT,
@@ -50,11 +48,14 @@ export default (sequelize: Sequelize) => {
         isFloat: true
       }
     },
-    tiempo_jugado: DataTypes.FLOAT
+    tiempo_jugado: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    }
   }, {
     sequelize,
     modelName: 'ColeccionUsuario',
-    tableName: 'coleccion_usuario',
+    tableName: 'Coleccion-usuario',
     timestamps: true
   });
   return ColeccionUsuario;

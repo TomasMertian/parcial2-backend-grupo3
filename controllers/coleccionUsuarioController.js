@@ -3,21 +3,21 @@ const { ColeccionUsuario, Usuario, Videojuego } = require("../models");
 // ------- POST /coleccion (1. Agregar a colección) --------//
 const agregarAColeccion = async (req, res) => {
   try {
-    const { usuario_id, videojuego_id, estado, calificacion, tiempo_juego } =
+    const { id_usuario, id_videojuego, estado, calificacion, tiempo_jugado } =
       req.body;
 
-    const usuario = await Usuario.findByPk(usuario_id);
+    const usuario = await Usuario.findByPk(id_usuario);
     if (!usuario) {
       return res.status(404).json({ msg: "Usuario no encontrado" });
     }
 
-    const juego = await Videojuego.findByPk(videojuego_id);
+    const juego = await Videojuego.findByPk(id_videojuego);
     if (!juego) {
       return res.status(404).json({ msg: "Videojuego no encontrado" });
     }
 
     const existe = await ColeccionUsuario.findOne({
-      where: { usuario_id, videojuego_id },
+      where: { id_usuario, id_videojuego },
     });
 
     if (existe) {
@@ -27,11 +27,11 @@ const agregarAColeccion = async (req, res) => {
     }
 
     const nuevaEntrada = await ColeccionUsuario.create({
-      usuario_id,
-      videojuego_id,
+      id_usuario,
+      id_videojuego,
       estado,
       calificacion,
-      tiempo_juego,
+      tiempo_jugado,
     });
 
     return res.status(201).json({
@@ -52,7 +52,7 @@ const obtenerColeccionUsuario = async (req, res) => {
     const { id_usuario } = req.params;
 
     const coleccion = await ColeccionUsuario.findAll({
-      where: { usuario_id: id_usuario },
+      where: { id_usuario: id_usuario },
       include: [
         {
           model: Videojuego,
@@ -76,12 +76,12 @@ const obtenerColeccionUsuario = async (req, res) => {
 const actualizarJuegoColeccion = async (req, res) => {
   try {
     const { id_usuario, id_videojuego } = req.params;
-    const { estado, calificacion, tiempo_juego } = req.body;
+    const { estado, calificacion, tiempo_jugado } = req.body;
 
     const juego = await ColeccionUsuario.findOne({
       where: {
-        usuario_id: id_usuario,
-        videojuego_id: id_videojuego,
+        id_usuario: id_usuario,
+        id_videojuego: id_videojuego,
       },
     });
 
@@ -94,7 +94,7 @@ const actualizarJuegoColeccion = async (req, res) => {
     await juego.update({
       estado,
       calificacion,
-      tiempo_juego,
+      tiempo_jugado,
     });
 
     return res.status(200).json({
@@ -116,8 +116,8 @@ const eliminarJuegoColeccion = async (req, res) => {
 
     const juego = await ColeccionUsuario.findOne({
       where: {
-        usuario_id: id_usuario,
-        videojuego_id: id_videojuego,
+        id_usuario: id_usuario,
+        id_videojuego: id_videojuego,
       },
     });
 
