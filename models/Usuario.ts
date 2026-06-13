@@ -4,7 +4,7 @@ export interface UsuarioAttributes {
   id_usuario: number;
   nombre: string;
   email: string;
-  contraseña: string;
+  password: string;
 }
 
 export interface UsuarioCreationAttributes extends Partial<UsuarioAttributes> {}
@@ -13,7 +13,7 @@ class Usuario extends Model<UsuarioAttributes, UsuarioCreationAttributes> {
   declare id_usuario: number;
   declare nombre: string;
   declare email: string;
-  declare contraseña: string;
+  declare password: string;
 }
 
 export default (sequelize: Sequelize) => {
@@ -30,16 +30,19 @@ export default (sequelize: Sequelize) => {
     email: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      unique: true
-    },
-    contraseña: {
+      unique: true,
+      validate: {
+        isEmail: true
+    }
+  },
+    password: {
       type: DataTypes.STRING(255),
       allowNull: false
     }
   }, {
     sequelize,
     modelName: 'Usuario',
-    tableName: 'usuario',
+    tableName: 'Users',
     timestamps: true
   });
   return Usuario;
