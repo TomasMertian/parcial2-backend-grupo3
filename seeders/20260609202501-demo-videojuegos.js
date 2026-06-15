@@ -9,7 +9,7 @@ module.exports = {
         titulo: 'League of Legends',
         genero: 'MOBA',
         plataforma: 'PC',
-        precio: 0.00, // gratuito
+        precio: 0.00, //gratuito
         descripcion: 'Juego de estrategia por equipos donde dos bandos de cinco campeones se enfrentan para destruir la base del otro.',
         desarrollador: 'Riot Games',
         createdAt: new Date(),
@@ -20,7 +20,7 @@ module.exports = {
         genero: 'Shooter / FPS',
         plataforma: 'Multiplataforma',
         precio: 59.99,
-        descripcion: 'Shooter en primera persona con un multijugador frenetico y el clásico modo zombies.',
+        descripcion: 'Shooter en primera persona con un multijugador frenetico y el clasico modo zombies.',
         desarrollador: 'Treyarch',
         createdAt: new Date(),
         updatedAt: new Date()
