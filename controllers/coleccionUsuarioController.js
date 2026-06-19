@@ -26,7 +26,7 @@ const agregarAColeccion = async (req, res) => {
       });
     }
 
-    const nuevaEntrada = await ColeccionUsuario.create({
+    const juegoAgregado = await ColeccionUsuario.create({
       id_usuario,
       id_videojuego,
       estado,
@@ -36,7 +36,7 @@ const agregarAColeccion = async (req, res) => {
 
     return res.status(201).json({
       msg: "Juego agregado a la colección",
-      coleccion: nuevaEntrada,
+      coleccion: juegoAgregado,
     });
   } catch (error) {
     console.log(error);
@@ -140,10 +140,9 @@ const eliminarJuegoColeccion = async (req, res) => {
   }
 };
 
-
 module.exports = {
   agregarAColeccion,
   obtenerColeccionUsuario,
   actualizarJuegoColeccion,
-  eliminarJuegoColeccion
+  eliminarJuegoColeccion,
 };
