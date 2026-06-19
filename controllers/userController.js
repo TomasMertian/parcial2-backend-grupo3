@@ -1,9 +1,9 @@
-const { Usuario } = require('../models/User');
+const { Usuario } = require('../models');
 
 //-------- POST /usuarios (1. Registrar) --------//
 const registrarUsuario = async(req, res) => {
     try {
-        const {nombre, email, contraseña} = req.body;
+        const {nombre, email, password} = req.body;
 
         // Buscamos si el email ya existe en la Base de Datos
         const existeUsuario = await Usuario.findOne({where: {email}});
@@ -16,7 +16,7 @@ const registrarUsuario = async(req, res) => {
         }
 
         // Crear el usuario directamente en la Base de Datos
-        const nuevoUsuario = await Usuario.create({nombre, email, contraseña});
+        const nuevoUsuario = await Usuario.create({nombre, email, password});
 
         return res.status(201).json({
             msg: `Usuario registrado con éxito`,
@@ -68,7 +68,7 @@ const obtenerUsuarioPorId = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
     try {
         const {id} = req.params;
-        const {nombre, email, contraseña} = req.body;
+        const {nombre, email, password} = req.body;
 
         // Busca al usuario en la Base de Datos
         const usuarioOriginal = await Usuario.findByPk(id);
@@ -95,7 +95,7 @@ const actualizarUsuario = async (req, res) => {
         await usuarioOriginal.update({
             nombre: nombre || usuarioOriginal.nombre,
             email: email || usuarioOriginal.email,
-            contraseña: contraseña || usuarioOriginal.contraseña
+            password: password || usuarioOriginal.password
         });
 
         // Muestra un mensaje de control por la consola del servidor
