@@ -479,3 +479,42 @@ GET /api/coleccion/1
 ```
 
 ---
+
+# Carga inicial de datos (Seeders)
+
+**Desarrollado por:** Renata Turani
+
+En esta sección del proyecto me encargue de armar los seeders usando Sequelize. Mi trabajo fue crear tres scripts que le inyectan datos de prueba a nuestra base de datos de forma automatica. Creando asi 2 usuarios, 3 videojuegos y 3 colecciones distintas. 
+
+---
+
+## Tecnologias y herramientas utilizadas
+* **Node.js**
+* **Sequelize** 
+* **PostgreSQL** (base de datos en la nube via Neon)
+
+---
+
+Archivos utilizados: 
+1. **`Demo-Usuarios`: En este archivo se cargan usuarios base al sistema; definiendo su `nombre`, `email` y `password`. El ID es manejado de manera autoincremental por el motor de base de datos.
+2. **`Demo-Videojuegos`: Genera 3 videojuegos distintos con todos sus atributos requeridos (`titulo`, `genero`, `plataforma`, `precio`, `descripcion` y `desarrollador`).
+3. **`Demo-Colecciones`:** Esta es la tabla intermedia que vincula a los usuarios con los videojuegos. Simula un uso real de la aplicación agregando datos especificos de la interaccion, como el `tiempo_jugado`, la `calificacion` y el `estado` del juego.
+
+Ademas cada tabla tiene dos "atributos" adicionales; createdAt y updatedAt, que son campos obligatorios que nos exige sequelize por defecto. Sirven para dejar un registro automatico de la fecha y hora exacta en la que se creo o se modifico un dato. Los agregue utilizando la función new Date() en cada uno de los registros para cumplir con la estructura de la tabla y que la base de datos no tire error al momento de insertar la informacion.
+
+---
+
+### Paso 1: Cree los tres archivos de los seeders usando la terminal de bash con los comandos:
+npx sequelize-cli seed:generate --name demo-usuarios (para el archivo demo-usuarios)
+npx sequelize-cli seed:generate --name demo-videojuegos (para el archivo demo-videojuegos)
+npx sequelize-cli seed:generate --name demo-colecciones (para el archivo demo-colecciones)
+Lo hice de esta forma porque al usar esos comandos, sequelize le asigna automáticamente un timestamp (una marca de tiempo con la fecha y hora exacta) como prefijo al nombre del archivo. Esto es fundamental para que los archivos se ejecuten en el orden correcto (primero los usuarios, despues los juegos, y al final la tabla que los une), asi la base de datos no tira errores por intentar usar un dato que todavia no existe.
+
+### Paso 2: Elimine el contenido predeterminado de los tres archivos, y luego en cada uno utilice "up" y `bulkInsert` que es un metodo de sequelize para cargar los datos. En lugar de ejecutar multiples consultas individuales a la base de datos (lo que sobrecargaria el sistema), `bulkInsert` me permitio agrupar todos los registros en un arreglo e insertarlos en una unica operación.
+
+Ademas, cree una funcionalidad adicional inversa utilizando "down" y bulkdelete, para vaciar las tablas y "arrancar de 0" en caso de que lo necesitemos con mi grupo.
+
+### Paso 3: Por ultimo, envie los datos que cargue a la base de datos que se encuentra en Neon, asegurandome de que mi compañero ya habria creado las migraciones para evitar errores. Lo hice usando el comando:
+npx sequelize-cli db:seed:all
+
+---
