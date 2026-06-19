@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize';
 import config from '../config/database';
 import usuarioFactory from './Usuario';
-import videojuegoFactory from './Videojuego';
+import videojuegoFactory from './Videojuegos';
 import coleccionUsuarioFactory from './ColeccionUsuario';
 
 const env = process.env.NODE_ENV || 'development';
@@ -38,16 +38,16 @@ const ColeccionUsuario = coleccionUsuarioFactory(sequelize);
 
 Usuario.belongsToMany(Videojuego, {
   through: ColeccionUsuario,
-  foreignKey: 'usuario_id'
+  foreignKey: 'id_usuario'
 });
 Videojuego.belongsToMany(Usuario, {
   through: ColeccionUsuario,
-  foreignKey: 'videojuego_id'
+  foreignKey: 'id_videojuego'
 });
-ColeccionUsuario.belongsTo(Usuario, { foreignKey: 'usuario_id' });
-ColeccionUsuario.belongsTo(Videojuego, { foreignKey: 'videojuego_id' });
-Usuario.hasMany(ColeccionUsuario, { foreignKey: 'usuario_id' });
-Videojuego.hasMany(ColeccionUsuario, { foreignKey: 'videojuego_id' });
+ColeccionUsuario.belongsTo(Usuario, { foreignKey: 'id_usuario' });
+ColeccionUsuario.belongsTo(Videojuego, { foreignKey: 'id_videojuego' });
+Usuario.hasMany(ColeccionUsuario, { foreignKey: 'id_usuario' });
+Videojuego.hasMany(ColeccionUsuario, { foreignKey: 'id_videojuego' });
 
 export {
   sequelize,
