@@ -518,3 +518,159 @@ Ademas, cree una funcionalidad adicional inversa utilizando "down" y bulkdelete,
 npx sequelize-cli db:seed:all
 
 ---
+
+## **Integrante:** Tomás Mertian
+
+**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts`
+
+---
+
+## 🏛️ Arquitectura del Módulo
+
+Este módulo implementa la capa de datos de la aplicación de colección de videojuegos utilizando Sequelize ORM con TypeScript sobre PostgreSQL. Está compuesto por tres modelos principales (`Usuario`, `Videojuego` y `ColeccionUsuario`) y un archivo de inicialización (`index.ts`) que centraliza la conexión a la base de datos y define las relaciones entre modelos.
+
+---
+
+## 📄 Archivo: `Usuario.ts`
+
+### Descripción
+Define el modelo Sequelize que representa a los usuarios de la plataforma. Mapea la tabla `Users` de PostgreSQL e incluye validaciones de formato de email y restricción de unicidad.
+
+### Interfaces TypeScript
+
+#### `UsuarioAttributes`
+Define la forma del objeto de datos completo del usuario:
+```ts
+id_usuario: number   // Clave primaria autoincremental
+nombre: string       // Nombre del usuario (máx. 100 chars)
+email: string        // Email único con validación de formato
+password: string     // Contraseña hasheada (máx. 255 chars)
+```
+
+#### `UsuarioCreationAttributes`
+Extiende `UsuarioAttributes` con `Partial<>`, haciendo **todos** los campos opcionales en tiempo de compilación. Esto permite que TypeScript no exija ningún campo al instanciar el modelo; las restricciones reales de nulabilidad (`allowNull: false`) las enforcea Sequelize en runtime contra la base de datos.
+
+### Definición del Modelo — `Usuario.init()`
+
+| Campo | Tipo Sequelize | Restricciones / Opciones | Notas |
+|---|---|---|---|
+| `id_usuario` | `INTEGER` | `autoIncrement: true`, PK | |
+| `nombre` | `STRING(100)` | `allowNull: false` | |
+| `email` | `STRING(255)` | `allowNull: false`, `unique: true` | `validate: isEmail` |
+| `password` | `STRING(255)` | `allowNull: false` | |
+
+### Configuración del Modelo
+- `modelName`: `"Usuario"`
+- `tableName`: `"Users"`
+- `timestamps: true` → Sequelize agrega automáticamente `createdAt` y `updatedAt`
+
+---
+
+## 📄 Archivo: `Videojuegos.ts`
+
+### Descripción
+Define el modelo que representa el catálogo de videojuegos disponibles en la plataforma. Mapea la tabla `Videojuegos` y almacena información descriptiva y comercial de cada título.
+
+### Interfaces TypeScript
+
+#### `VideojuegoAttributes`
+Forma del objeto completo del videojuego:
+```ts
+id_videojuego: number  // Clave primaria autoincremental
+titulo: string         // Título del juego (máx. 200 chars, obligatorio)
+genero: string         // Género (ej: RPG, Acción)
+plataforma: string     // Plataforma (ej: PC, PS5)
+desarrollador: string  // Nombre del estudio (máx. 200 chars)
+descripcion: string    // Descripción larga (TEXT)
+precio: number         // Precio con dos decimales (DECIMAL 10,2)
+```
+
+#### `VideojuegoCreationAttributes`
+Extiende `VideojuegoAttributes` con `Partial<>`, haciendo **todos** los campos opcionales en tiempo de compilación. Solo `titulo` tiene restricción real de nulabilidad (`allowNull: false`), que Sequelize enforcea en runtime.
+
+### Definición del Modelo — `Videojuego.init()`
+
+| Campo | Tipo Sequelize | Restricciones / Opciones | Notas |
+|---|---|---|---|
+| `id_videojuego` | `INTEGER` | `autoIncrement: true`, PK | |
+| `titulo` | `STRING(200)` | `allowNull: false` | |
+| `genero` | `STRING(100)` | Opcional | |
+| `plataforma` | `STRING(100)` | Opcional | |
+| `desarrollador` | `STRING(200)` | Opcional | |
+| `descripcion` | `TEXT` | Opcional | |
+| `precio` | `DECIMAL(10,2)` | Opcional | |
+
+### Configuración del Modelo
+- `modelName`: `"Videojuego"`
+- `tableName`: `"Videojuegos"`
+- `timestamps: true` → Agrega `createdAt` y `updatedAt` automáticamente
+
+---
+
+## 📄 Archivo: `ColeccionUsuario.ts`
+
+### Descripción
+Implementa la tabla intermedia de la relación muchos-a-muchos entre `Usuario` y `Videojuego`. Además de las claves foráneas, extiende la relación con atributos propios que registran el estado de juego del usuario para cada título de su colección.
+
+### Enum: `EstadoJuego`
+Define los estados posibles de un videojuego dentro de la colección:
+```ts
+JUGANDO     = 'jugando'
+EN_PROGRESO = 'en_progreso'
+COMPLETADO  = 'completado'
+```
+
+### Definición del Modelo — `ColeccionUsuario.init()`
+
+| Campo | Tipo Sequelize | Restricciones / Opciones | Notas |
+|---|---|---|---|
+| `id_usuario` | `INTEGER` | PK compuesta + FK → `Users` | |
+| `id_videojuego` | `INTEGER` | PK compuesta + FK → `Videojuegos` | |
+| `estado` | `STRING(50)` | `defaultValue: EstadoJuego.EN_PROGRESO` | Almacena los valores del enum `EstadoJuego` como string; no usa `ENUM` nativo de PostgreSQL |
+| `calificacion` | `FLOAT` | `min: 1`, `max: 10` | `validate: isFloat` |
+| `tiempo_jugado` | `INTEGER` | `defaultValue: 0` | Minutos u horas jugados |
+
+### Clave Primaria Compuesta
+La tabla usa una PK compuesta por los dos campos de referencia: la combinación `(id_usuario, id_videojuego)` identifica unívocamente cada entrada en la colección, evitando duplicados del mismo juego para el mismo usuario.
+
+### Configuración del Modelo
+- `modelName`: `"ColeccionUsuario"`
+- `tableName`: `"Coleccion_usuario"`
+- `timestamps: true` → Agrega `createdAt` y `updatedAt`
+
+---
+
+## 📄 Archivo: `index.ts`
+
+### Descripción
+Es el punto de entrada de la capa de datos. Se encarga de inicializar la conexión a PostgreSQL, instanciar los tres modelos y definir todas las asociaciones entre ellos. Exporta las instancias listas para usar en el resto de la aplicación.
+
+### Inicialización de la Conexión
+La conexión se resuelve mediante una lógica de prioridad:
+
+1. Si existe `DATABASE_URL` (ej: NeonDB, Railway): se usa directamente con `new Sequelize(url, options)`.
+2. Si no existe: se construye desde las variables individuales (`database`, `username`, `password`, `host`, `port`) definidas en `config/database.ts`.
+
+En ambos casos se aplica la configuración de `logging` y `pool` del entorno activo (`development` o `production`).
+
+### Instanciación de Modelos
+```ts
+const Usuario          = usuarioFactory(sequelize)
+const Videojuego       = videojuegoFactory(sequelize)
+const ColeccionUsuario = coleccionUsuarioFactory(sequelize)
+```
+
+### Asociaciones Definidas
+
+| Asociación | Método Sequelize | `foreignKey` |
+|---|---|---|
+| `Usuario` ↔ `Videojuego` (N:M) | `belongsToMany` | `id_usuario` / `id_videojuego` |
+| `ColeccionUsuario` → `Usuario` | `belongsTo` | `id_usuario` |
+| `ColeccionUsuario` → `Videojuego` | `belongsTo` | `id_videojuego` |
+| `Usuario` → `ColeccionUsuario` | `hasMany` | `id_usuario` |
+| `Videojuego` → `ColeccionUsuario` | `hasMany` | `id_videojuego` |
+
+### Exports
+```ts
+export { sequelize, Sequelize, Usuario, Videojuego, ColeccionUsuario }
+```
