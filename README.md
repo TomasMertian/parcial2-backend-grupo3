@@ -674,3 +674,62 @@ const ColeccionUsuario = coleccionUsuarioFactory(sequelize)
 ```ts
 export { sequelize, Sequelize, Usuario, Videojuego, ColeccionUsuario }
 ```
+# Integrante Santiago De dios
+# Documentación de Migraciones, Modelos y Entorno Dockerizado
+
+Esta documentación detalla la estructura de la base de datos relacional para el sistema de gestión de videojuegos, la estrategia conjunta de validaciones entre capas, y la configuración del entorno de desarrollo mediante Docker y pgAdmin.
+
+---
+
+## 1. Esquema de Base de Datos y Migraciones
+
+El diseño de datos define una arquitectura donde los usuarios interactúan con un catálogo mediante una relación de **Muchos a Muchos (N:M)**, gestionada a través de una tabla intermedia que registra métricas personalizadas de consumo de videojuegos.
+
+### 1.1. Tabla `Users`
+Almacena las credenciales y el perfil esencial de los usuarios registrados en el sistema.
+* **`id_usuario`**: Clave primaria de tipo entero con incremento automático.
+* **`nombre`**: Cadena de texto obligatoria para la identificación del usuario.
+* **`email`**: Cadena de texto obligatoria y única por cuenta para evitar duplicados.
+* **`password`**: Cadena de texto obligatoria destinada a almacenar el hash de seguridad.
+
+### 1.2. Tabla `Videojuegos`
+Catálogo estructurado con los atributos de cada título disponible en la plataforma.
+* **`id_videojuego`**: Identificador único entero autoincremental.
+* **Campos informativos**: Registra de manera obligatoria el `titulo`, `genero`, `precio`, `descripcion`, `desarrollador` y `plataforma` de cada juego.
+
+### 1.3. Tabla `Coleccion-usuario`
+Tabla intermedia que rompe la relación N:M, vinculando usuarios con sus respectivos videojuegos y guardando información detallada de su progreso.
+* **`id_usuario`**: Clave primaria y foránea conectada directamente a la tabla `Users`.
+* **`id_videojuego`**: Clave primaria y foránea vinculada a la tabla `Videojuegos`.
+* **`tiempo_jugado`**: Entero obligatorio que registra los minutos jugados, inicializado por defecto en 0.
+* **`calificacion`**: Valor numérico flotante obligatorio pensado para albergar puntuaciones en escalas numéricas.
+* **`estado`**: Cadena de texto obligatoria que por defecto se define como `'Sin_jugar'`.
+
+---
+## 2. Validaciones e Integridad a Nivel de Base de Datos
+
+Toda la lógica de protección, consistencia y validación estructural de los datos se definió directamente en los archivos de migración, estableciendo las reglas físicas inmutables que el motor de base de datos se encarga de forzar:
+
+* **Restricción de No Nulidad (`allowNull: false`)**: Se implementó de manera generalizada en todos los campos críticos de las tablas `Users`, `Videojuegos` y `Coleccion-usuario`, garantizando que nunca se guarden registros rotos o incompletos.
+* **Validación de Unicidad Física**: Al declarar `unique: true` sobre la columna `email`, se previene de forma definitiva a nivel de almacenamiento la duplicación de usuarios con un mismo correo.
+* **Integridad Referencial en Cascada**: Las llaves foráneas de la tabla intermedia incorporan las propiedades `onDelete: 'CASCADE'` y `onUpdate: 'CASCADE'`. Esto resguarda la consistencia de la base de datos ante eliminaciones o modificaciones concurrentes, borrando automáticamente los registros huérfanos asociados.
+
+---
+---
+
+## 3. Entorno de Desarrollo Orquestado con Docker
+
+La infraestructura de desarrollo está completamente automatizada mediante contenedores, permitiendo un despliegue homogéneo y simplificado del ecosistema de software.
+
+### 3.1. Servicio Backend
+* Se compila en base al entorno de desarrollo local empleando el archivo `Dockerfile.dev`.
+* Expone el puerto de red **3001** para la API y el puerto **9229** destinado a las tareas de depuración en tiempo de ejecución.
+* Mapea el código fuente local con volúmenes para reflejar cambios en tiempo real sin necesidad de reiniciar el contenedor.
+
+### 3.2. Servicio pgAdmin
+Herramienta de administración web integrada para monitorizar esquemas, optimizar consultas y auditar el comportamiento de la base de datos PostgreSQL.
+* **Imagen base**: Utiliza el contenedor oficial `dpage/pgadmin4`.
+* **Acceso Web**: Mapeado en el puerto local **5050** (`http://localhost:5050`).
+* **Credenciales de Acceso Administrador**:
+  * **Usuario (Email)**: `admin@admin.com`
+  * **Contraseña (Password)**: `root`
