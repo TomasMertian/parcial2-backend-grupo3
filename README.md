@@ -733,3 +733,25 @@ Herramienta de administración web integrada para monitorizar esquemas, optimiza
 * **Credenciales de Acceso Administrador**:
   * **Usuario (Email)**: `admin@admin.com`
   * **Contraseña (Password)**: `root`
+## 4. Comandos de Utilidad (Sequelize CLI)
+
+Para gestionar la estructura de la base de datos desde cero, se utilizaron los siguientes comandos de Sequelize CLI en la terminal:
+
+* **Inicializar Sequelize**: Genera las carpetas necesarias (`config`, `models`, `migrations`, `seeders`).
+    ```bash
+    npx sequelize-cli init
+    ```
+* **Crear la base de datos**: Crea la DB en PostgreSQL usando los datos del `config.json`.
+    ```bash
+    npx sequelize-cli db:create
+    ```
+* **Generar los archivos de migración**: Crea los archivos físicos para definir las tablas.
+    ```bash
+    npx sequelize-cli migration:generate --name create-users
+    npx sequelize-cli migration:generate --name create-videojuegos
+    npx sequelize-cli migration:generate --name create-coleccion-usuario
+    ```
+* **Ejecutar las migraciones**: Impacta los cambios en el motor de base de datos para crear de forma definitiva las tablas.
+    ```bash
+    npx sequelize-cli db:migrate
+    ```
