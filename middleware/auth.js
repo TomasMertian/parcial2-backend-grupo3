@@ -1,4 +1,4 @@
-return jwt.sing(
+return jwt.sign(
     { id: user.id, email: user.email},
     process.env.JWT_SECRET,
     {expiresIN: '24h'}
