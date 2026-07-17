@@ -1,1 +1,1 @@
-
+const newUser = await User.create({nombre ,email, password })
