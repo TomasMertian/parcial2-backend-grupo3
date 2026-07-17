@@ -3,3 +3,5 @@ return jwt.sing(
     process.env.JWT_SECRET,
     {expiresIN: '24h'}
 );
+
+const token = authHeader.split(' ')[1];
