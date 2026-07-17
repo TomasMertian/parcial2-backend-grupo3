@@ -1,5 +1,5 @@
 import { Model, DataTypes, Sequelize } from 'sequelize';
-import bcrypt from 'bcryptjs';
+const bcrypt = require('bcryptjs');
 
 export interface UsuarioAttributes {
   id_usuario: number;
