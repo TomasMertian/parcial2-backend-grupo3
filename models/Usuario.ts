@@ -46,7 +46,7 @@ export default (sequelize: Sequelize) => {
   }, {
     sequelize,
     modelName: 'Usuario',
-    tableName: 'usuario',
+    tableName: 'Users',
     timestamps: true,
     hooks: {
       beforeCreate: async (user: Usuario) => {
