@@ -4,7 +4,7 @@ import { Layout } from "./components/Layout";
 import PrivateRoute from "./components/PrivateRoute";
 import Login from './pages/Login';
 import Register from "./pages/Register";
-import './styles/global.css';
+import './stylesnpm install -g pnpm/global.css';
 
 function App() {
     return (
