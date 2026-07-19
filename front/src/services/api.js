@@ -2,7 +2,7 @@ import axios from 'axios';
 
 //Creamos una instancia de axios para evitar repetir la URL en cada petición
 const api = axios.create ({
-    baseURL: 'http//localhost:3001/api'
+    baseURL: 'http://localhost:3001/api'
 });
 
 api.interceptors.request.use((config) => {
