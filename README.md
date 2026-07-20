@@ -479,3 +479,279 @@ GET /api/coleccion/1
 ```
 
 ---
+
+# Carga inicial de datos (Seeders)
+
+**Desarrollado por:** Renata Turani
+
+En esta sección del proyecto me encargue de armar los seeders usando Sequelize. Mi trabajo fue crear tres scripts que le inyectan datos de prueba a nuestra base de datos de forma automatica. Creando asi 2 usuarios, 3 videojuegos y 3 colecciones distintas. 
+
+---
+
+## Tecnologias y herramientas utilizadas
+* **Node.js**
+* **Sequelize** 
+* **PostgreSQL** (base de datos en la nube via Neon)
+
+---
+
+Archivos utilizados: 
+1. **`Demo-Usuarios`: En este archivo se cargan usuarios base al sistema; definiendo su `nombre`, `email` y `password`. El ID es manejado de manera autoincremental por el motor de base de datos.
+2. **`Demo-Videojuegos`: Genera 3 videojuegos distintos con todos sus atributos requeridos (`titulo`, `genero`, `plataforma`, `precio`, `descripcion` y `desarrollador`).
+3. **`Demo-Colecciones`:** Esta es la tabla intermedia que vincula a los usuarios con los videojuegos. Simula un uso real de la aplicación agregando datos especificos de la interaccion, como el `tiempo_jugado`, la `calificacion` y el `estado` del juego.
+
+Ademas cada tabla tiene dos "atributos" adicionales; createdAt y updatedAt, que son campos obligatorios que nos exige sequelize por defecto. Sirven para dejar un registro automatico de la fecha y hora exacta en la que se creo o se modifico un dato. Los agregue utilizando la función new Date() en cada uno de los registros para cumplir con la estructura de la tabla y que la base de datos no tire error al momento de insertar la informacion.
+
+---
+
+### Paso 1: Cree los tres archivos de los seeders usando la terminal de bash con los comandos:
+npx sequelize-cli seed:generate --name demo-usuarios (para el archivo demo-usuarios)
+npx sequelize-cli seed:generate --name demo-videojuegos (para el archivo demo-videojuegos)
+npx sequelize-cli seed:generate --name demo-colecciones (para el archivo demo-colecciones)
+Lo hice de esta forma porque al usar esos comandos, sequelize le asigna automáticamente un timestamp (una marca de tiempo con la fecha y hora exacta) como prefijo al nombre del archivo. Esto es fundamental para que los archivos se ejecuten en el orden correcto (primero los usuarios, despues los juegos, y al final la tabla que los une), asi la base de datos no tira errores por intentar usar un dato que todavia no existe.
+
+### Paso 2: Elimine el contenido predeterminado de los tres archivos, y luego en cada uno utilice "up" y `bulkInsert` que es un metodo de sequelize para cargar los datos. En lugar de ejecutar multiples consultas individuales a la base de datos (lo que sobrecargaria el sistema), `bulkInsert` me permitio agrupar todos los registros en un arreglo e insertarlos en una unica operación.
+
+Ademas, cree una funcionalidad adicional inversa utilizando "down" y bulkdelete, para vaciar las tablas y "arrancar de 0" en caso de que lo necesitemos con mi grupo.
+
+### Paso 3: Por ultimo, envie los datos que cargue a la base de datos que se encuentra en Neon, asegurandome de que mi compañero ya habria creado las migraciones para evitar errores. Lo hice usando el comando:
+npx sequelize-cli db:seed:all
+
+---
+
+## **Integrante:** Tomás Mertian
+
+**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts`
+
+---
+
+## 🏛️ Arquitectura del Módulo
+
+Este módulo implementa la capa de datos de la aplicación de colección de videojuegos utilizando Sequelize ORM con TypeScript sobre PostgreSQL. Está compuesto por tres modelos principales (`Usuario`, `Videojuego` y `ColeccionUsuario`) y un archivo de inicialización (`index.ts`) que centraliza la conexión a la base de datos y define las relaciones entre modelos.
+
+---
+
+## 📄 Archivo: `Usuario.ts`
+
+### Descripción
+Define el modelo Sequelize que representa a los usuarios de la plataforma. Mapea la tabla `Users` de PostgreSQL e incluye validaciones de formato de email y restricción de unicidad.
+
+### Interfaces TypeScript
+
+#### `UsuarioAttributes`
+Define la forma del objeto de datos completo del usuario:
+```ts
+id_usuario: number   // Clave primaria autoincremental
+nombre: string       // Nombre del usuario (máx. 100 chars)
+email: string        // Email único con validación de formato
+password: string     // Contraseña hasheada (máx. 255 chars)
+```
+
+#### `UsuarioCreationAttributes`
+Extiende `UsuarioAttributes` con `Partial<>`, haciendo **todos** los campos opcionales en tiempo de compilación. Esto permite que TypeScript no exija ningún campo al instanciar el modelo; las restricciones reales de nulabilidad (`allowNull: false`) las enforcea Sequelize en runtime contra la base de datos.
+
+### Definición del Modelo — `Usuario.init()`
+
+| Campo | Tipo Sequelize | Restricciones / Opciones | Notas |
+|---|---|---|---|
+| `id_usuario` | `INTEGER` | `autoIncrement: true`, PK | |
+| `nombre` | `STRING(100)` | `allowNull: false` | |
+| `email` | `STRING(255)` | `allowNull: false`, `unique: true` | `validate: isEmail` |
+| `password` | `STRING(255)` | `allowNull: false` | |
+
+### Configuración del Modelo
+- `modelName`: `"Usuario"`
+- `tableName`: `"Users"`
+- `timestamps: true` → Sequelize agrega automáticamente `createdAt` y `updatedAt`
+
+---
+
+## 📄 Archivo: `Videojuegos.ts`
+
+### Descripción
+Define el modelo que representa el catálogo de videojuegos disponibles en la plataforma. Mapea la tabla `Videojuegos` y almacena información descriptiva y comercial de cada título.
+
+### Interfaces TypeScript
+
+#### `VideojuegoAttributes`
+Forma del objeto completo del videojuego:
+```ts
+id_videojuego: number  // Clave primaria autoincremental
+titulo: string         // Título del juego (máx. 200 chars, obligatorio)
+genero: string         // Género (ej: RPG, Acción)
+plataforma: string     // Plataforma (ej: PC, PS5)
+desarrollador: string  // Nombre del estudio (máx. 200 chars)
+descripcion: string    // Descripción larga (TEXT)
+precio: number         // Precio con dos decimales (DECIMAL 10,2)
+```
+
+#### `VideojuegoCreationAttributes`
+Extiende `VideojuegoAttributes` con `Partial<>`, haciendo **todos** los campos opcionales en tiempo de compilación. Solo `titulo` tiene restricción real de nulabilidad (`allowNull: false`), que Sequelize enforcea en runtime.
+
+### Definición del Modelo — `Videojuego.init()`
+
+| Campo | Tipo Sequelize | Restricciones / Opciones | Notas |
+|---|---|---|---|
+| `id_videojuego` | `INTEGER` | `autoIncrement: true`, PK | |
+| `titulo` | `STRING(200)` | `allowNull: false` | |
+| `genero` | `STRING(100)` | Opcional | |
+| `plataforma` | `STRING(100)` | Opcional | |
+| `desarrollador` | `STRING(200)` | Opcional | |
+| `descripcion` | `TEXT` | Opcional | |
+| `precio` | `DECIMAL(10,2)` | Opcional | |
+
+### Configuración del Modelo
+- `modelName`: `"Videojuego"`
+- `tableName`: `"Videojuegos"`
+- `timestamps: true` → Agrega `createdAt` y `updatedAt` automáticamente
+
+---
+
+## 📄 Archivo: `ColeccionUsuario.ts`
+
+### Descripción
+Implementa la tabla intermedia de la relación muchos-a-muchos entre `Usuario` y `Videojuego`. Además de las claves foráneas, extiende la relación con atributos propios que registran el estado de juego del usuario para cada título de su colección.
+
+### Enum: `EstadoJuego`
+Define los estados posibles de un videojuego dentro de la colección:
+```ts
+JUGANDO     = 'jugando'
+EN_PROGRESO = 'en_progreso'
+COMPLETADO  = 'completado'
+```
+
+### Definición del Modelo — `ColeccionUsuario.init()`
+
+| Campo | Tipo Sequelize | Restricciones / Opciones | Notas |
+|---|---|---|---|
+| `id_usuario` | `INTEGER` | PK compuesta + FK → `Users` | |
+| `id_videojuego` | `INTEGER` | PK compuesta + FK → `Videojuegos` | |
+| `estado` | `STRING(50)` | `defaultValue: EstadoJuego.EN_PROGRESO` | Almacena los valores del enum `EstadoJuego` como string; no usa `ENUM` nativo de PostgreSQL |
+| `calificacion` | `FLOAT` | `min: 1`, `max: 10` | `validate: isFloat` |
+| `tiempo_jugado` | `INTEGER` | `defaultValue: 0` | Minutos u horas jugados |
+
+### Clave Primaria Compuesta
+La tabla usa una PK compuesta por los dos campos de referencia: la combinación `(id_usuario, id_videojuego)` identifica unívocamente cada entrada en la colección, evitando duplicados del mismo juego para el mismo usuario.
+
+### Configuración del Modelo
+- `modelName`: `"ColeccionUsuario"`
+- `tableName`: `"Coleccion_usuario"`
+- `timestamps: true` → Agrega `createdAt` y `updatedAt`
+
+---
+
+## 📄 Archivo: `index.ts`
+
+### Descripción
+Es el punto de entrada de la capa de datos. Se encarga de inicializar la conexión a PostgreSQL, instanciar los tres modelos y definir todas las asociaciones entre ellos. Exporta las instancias listas para usar en el resto de la aplicación.
+
+### Inicialización de la Conexión
+La conexión se resuelve mediante una lógica de prioridad:
+
+1. Si existe `DATABASE_URL` (ej: NeonDB, Railway): se usa directamente con `new Sequelize(url, options)`.
+2. Si no existe: se construye desde las variables individuales (`database`, `username`, `password`, `host`, `port`) definidas en `config/database.ts`.
+
+En ambos casos se aplica la configuración de `logging` y `pool` del entorno activo (`development` o `production`).
+
+### Instanciación de Modelos
+```ts
+const Usuario          = usuarioFactory(sequelize)
+const Videojuego       = videojuegoFactory(sequelize)
+const ColeccionUsuario = coleccionUsuarioFactory(sequelize)
+```
+
+### Asociaciones Definidas
+
+| Asociación | Método Sequelize | `foreignKey` |
+|---|---|---|
+| `Usuario` ↔ `Videojuego` (N:M) | `belongsToMany` | `id_usuario` / `id_videojuego` |
+| `ColeccionUsuario` → `Usuario` | `belongsTo` | `id_usuario` |
+| `ColeccionUsuario` → `Videojuego` | `belongsTo` | `id_videojuego` |
+| `Usuario` → `ColeccionUsuario` | `hasMany` | `id_usuario` |
+| `Videojuego` → `ColeccionUsuario` | `hasMany` | `id_videojuego` |
+
+### Exports
+```ts
+export { sequelize, Sequelize, Usuario, Videojuego, ColeccionUsuario }
+```
+# Integrante Santiago De dios
+# Documentación de Migraciones, Modelos y Entorno Dockerizado
+
+Esta documentación detalla la estructura de la base de datos relacional para el sistema de gestión de videojuegos, la estrategia conjunta de validaciones entre capas, y la configuración del entorno de desarrollo mediante Docker y pgAdmin.
+
+---
+
+## 1. Esquema de Base de Datos y Migraciones
+
+El diseño de datos define una arquitectura donde los usuarios interactúan con un catálogo mediante una relación de **Muchos a Muchos (N:M)**, gestionada a través de una tabla intermedia que registra métricas personalizadas de consumo de videojuegos.
+
+### 1.1. Tabla `Users`
+Almacena las credenciales y el perfil esencial de los usuarios registrados en el sistema.
+* **`id_usuario`**: Clave primaria de tipo entero con incremento automático.
+* **`nombre`**: Cadena de texto obligatoria para la identificación del usuario.
+* **`email`**: Cadena de texto obligatoria y única por cuenta para evitar duplicados.
+* **`password`**: Cadena de texto obligatoria destinada a almacenar el hash de seguridad.
+
+### 1.2. Tabla `Videojuegos`
+Catálogo estructurado con los atributos de cada título disponible en la plataforma.
+* **`id_videojuego`**: Identificador único entero autoincremental.
+* **Campos informativos**: Registra de manera obligatoria el `titulo`, `genero`, `precio`, `descripcion`, `desarrollador` y `plataforma` de cada juego.
+
+### 1.3. Tabla `Coleccion-usuario`
+Tabla intermedia que rompe la relación N:M, vinculando usuarios con sus respectivos videojuegos y guardando información detallada de su progreso.
+* **`id_usuario`**: Clave primaria y foránea conectada directamente a la tabla `Users`.
+* **`id_videojuego`**: Clave primaria y foránea vinculada a la tabla `Videojuegos`.
+* **`tiempo_jugado`**: Entero obligatorio que registra los minutos jugados, inicializado por defecto en 0.
+* **`calificacion`**: Valor numérico flotante obligatorio pensado para albergar puntuaciones en escalas numéricas.
+* **`estado`**: Cadena de texto obligatoria que por defecto se define como `'Sin_jugar'`.
+
+---
+## 2. Validaciones e Integridad a Nivel de Base de Datos
+
+Toda la lógica de protección, consistencia y validación estructural de los datos se definió directamente en los archivos de migración, estableciendo las reglas físicas inmutables que el motor de base de datos se encarga de forzar:
+
+* **Restricción de No Nulidad (`allowNull: false`)**: Se implementó de manera generalizada en todos los campos críticos de las tablas `Users`, `Videojuegos` y `Coleccion-usuario`, garantizando que nunca se guarden registros rotos o incompletos.
+* **Validación de Unicidad Física**: Al declarar `unique: true` sobre la columna `email`, se previene de forma definitiva a nivel de almacenamiento la duplicación de usuarios con un mismo correo.
+* **Integridad Referencial en Cascada**: Las llaves foráneas de la tabla intermedia incorporan las propiedades `onDelete: 'CASCADE'` y `onUpdate: 'CASCADE'`. Esto resguarda la consistencia de la base de datos ante eliminaciones o modificaciones concurrentes, borrando automáticamente los registros huérfanos asociados.
+
+---
+---
+
+## 3. Entorno de Desarrollo Orquestado con Docker
+
+La infraestructura de desarrollo está completamente automatizada mediante contenedores, permitiendo un despliegue homogéneo y simplificado del ecosistema de software.
+
+### 3.1. Servicio Backend
+* Se compila en base al entorno de desarrollo local empleando el archivo `Dockerfile.dev`.
+* Expone el puerto de red **3001** para la API y el puerto **9229** destinado a las tareas de depuración en tiempo de ejecución.
+* Mapea el código fuente local con volúmenes para reflejar cambios en tiempo real sin necesidad de reiniciar el contenedor.
+
+### 3.2. Servicio pgAdmin
+Herramienta de administración web integrada para monitorizar esquemas, optimizar consultas y auditar el comportamiento de la base de datos PostgreSQL.
+* **Imagen base**: Utiliza el contenedor oficial `dpage/pgadmin4`.
+* **Acceso Web**: Mapeado en el puerto local **5050** (`http://localhost:5050`).
+* **Credenciales de Acceso Administrador**:
+  * **Usuario (Email)**: `admin@admin.com`
+  * **Contraseña (Password)**: `root`
+## 4. Comandos de Utilidad (Sequelize CLI)
+
+Para gestionar la estructura de la base de datos desde cero, se utilizaron los siguientes comandos de Sequelize CLI en la terminal:
+
+* **Inicializar Sequelize**: Genera las carpetas necesarias (`config`, `models`, `migrations`, `seeders`).
+    ```bash
+    npx sequelize-cli init
+    ```
+* **Crear la base de datos**: Crea la DB en PostgreSQL usando los datos del `config.json`.
+    ```bash
+    npx sequelize-cli db:create
+    ```
+* **Generar los archivos de migración**: Crea los archivos físicos para definir las tablas.
+    ```bash
+    npx sequelize-cli migration:generate --name create-users
+    npx sequelize-cli migration:generate --name create-videojuegos
+    npx sequelize-cli migration:generate --name create-coleccion-usuario
+    ```
+* **Ejecutar las migraciones**: Impacta los cambios en el motor de base de datos para crear de forma definitiva las tablas.
+    ```bash
+    npx sequelize-cli db:migrate
+    ```

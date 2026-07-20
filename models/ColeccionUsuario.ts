@@ -38,7 +38,7 @@ export default (sequelize: Sequelize) => {
     },
     estado: {
       type: DataTypes.STRING(50),
-      defaultValue: 'Sin_jugar'
+      defaultValue: EstadoJuego.EN_PROGRESO
     },
     calificacion: {
       type: DataTypes.FLOAT,
@@ -55,7 +55,7 @@ export default (sequelize: Sequelize) => {
   }, {
     sequelize,
     modelName: 'ColeccionUsuario',
-    tableName: 'Coleccion-usuario',
+    tableName: 'Coleccion_usuario',
     timestamps: true
   });
   return ColeccionUsuario;
