@@ -11,6 +11,7 @@ const {
 const { login } = require("../controllers/authController")
 
 router.post("/login",login)
+
 router.post("/", registrarUsuario);
 
 router.get("/:id", obtenerUsuarioPorId);
