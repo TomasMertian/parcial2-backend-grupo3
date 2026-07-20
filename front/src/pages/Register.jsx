@@ -2,6 +2,7 @@ import { useState, useContext} from "react";
 import { useNavigate } from "react-router-dom"
 import api from '../services/api';
 import { AuthContext } from "../context/AuthContext";
+import React from 'react';
 
 const Register = () => {
     const [formData, setFormData] = useState({ username: '', email: '', password: ''});

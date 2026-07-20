@@ -56,3 +56,30 @@ nav a {
 nav a:hover {
     color: var(--primary);
 }
+
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+.login-card {
+    background-color: var(--bg-card);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card input {
+    padding: 12px;
+    background-color: var(--bg-main);
+    border: 1px solid var(--primary);
+    color: var(--text-main);
+    border-radius: 4px;
+}

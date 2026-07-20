@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import React from 'react';
 
 //recibe 'children' que son las paginas que se van a mostrar dentro del layout
 export const Layout = ({ children}) => (

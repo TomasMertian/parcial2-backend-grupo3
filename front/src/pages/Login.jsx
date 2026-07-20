@@ -1,33 +1,56 @@
-import { useState, useContext, use } from "react";
+import React, { useState, useContext } from "react";
 import api from '../services/api';
 import { AuthContext } from "../context/AuthContext";
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
-    const [loading, setLoading] = useState(false); //Maneja si el botón debe estar o no deshabilitado
-    const { serUser } = useContext(AuthContext);
+    const [loading, setLoading] = useState(false);
+    const { setUser } = useContext(AuthContext);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+
+        console.log("Intentando loguear con:", formData);
+        setLoading(true);
+
         try {
-            const res = await api.post('/auth/login', formData)
-            //guardamos el token recibido
+            const res = await api.post('/usuarios/', formData);
             localStorage.setItem('token', res.data.token);
-            //Actualizamos para que la app sepa que esta logueado
             setUser({ logged: true });
-        }catch (error) {
-            alert("Credenciales incorrectas")
-        }finally {
-            setLoading(false); //libero el formulario
+        } catch (error) {
+            console.error(error);
+            alert("Credenciales incorrectas");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <input type="email" placeholder="Email" onChange={e => setFormData({...formData, email: e.target.value})} />
-            <input type="password" placeholder="Password" onChange={e => setFormData({...formData, password: e.target.value})} />
-            <button disabled={loading}>{loading ? 'Cargando...' : 'Iniciar Sesión'}</button>
-        </form>
+        <div className="container login-wrapper">
+            <form onSubmit={handleSubmit} className="login-card">
+                <h2 style={{ textAlign: 'center', color: 'var(--primary)' }}>Iniciar Sesión</h2>
+                
+                <input 
+                    type="email" 
+                    placeholder="Email" 
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                />
+                
+                <input 
+                    type="password" 
+                    placeholder="Password" 
+                    value={formData.password}
+                    onChange={e => setFormData({...formData, password: e.target.value})} 
+                />
+                
+                <button type="submit" disabled={loading}>
+                    {loading ? 'Cargando...' : 'Iniciar Sesión'}
+                </button>
+            </form>
+        </div>
     );
 };
+
+export default Login;
