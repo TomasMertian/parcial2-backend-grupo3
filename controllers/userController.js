@@ -5,7 +5,7 @@ const registrarUsuario = async(req, res) => {
     try {
         const {nombre, email, password} = req.body;
 
-        // Buscamos si el email ya existe en la Base de Datos
+        // Evita duplicados:Verifica si el email ya existe en la Base de Datos
         const existeUsuario = await Usuario.findOne({where: {email}});
 
         // Si existeUsuario tiene datos, corta la ejecución y da error 400
@@ -17,7 +17,7 @@ const registrarUsuario = async(req, res) => {
 
         // Crear el usuario directamente en la Base de Datos
         const nuevoUsuario = await Usuario.create({nombre, email, password});
-
+        // * Retorna estado 201 (Creado) y filtra la respuesta para no exponer la contraseña por seguridad
         return res.status(201).json({
             msg: `Usuario registrado con éxito`,
             user: {
@@ -29,6 +29,7 @@ const registrarUsuario = async(req, res) => {
 
     }catch (error) {
         console.log(error);
+        // * Error 500: Falla crítica del servidor o pérdida de conexión con la base de datos
         return res.status(500).json({
             error: `No se pudo registrar el usuario`
         });
@@ -41,6 +42,7 @@ const obtenerUsuarioPorId = async (req, res) => {
         const {id} = req.params;
 
         // Busca el usuario mediante el id en la Base de Datos
+        // * 'findByPk' es un método optimizado de Sequelize para buscar por la clave primaria (ID)
         const usuarioId = await Usuario.findByPk(id);
 
         // Control de existencia: Si no se encuentra, retorna un estado 404
@@ -133,7 +135,8 @@ const eliminarUsuario = async (req,res) => {
             });
         }
 
-        // Si existe, le dice a la Base de Datos que lo borre
+        // Si existe, le dice a la Base de Datos que lo elimine
+        // * El método '.destroy()' ejecuta un borrado físico definitivo (DELTE FROM) en la tabla
         await existeUsuario.destroy();
 
         // Devuelve el código 200 confirmando que se eliminó correctamente
