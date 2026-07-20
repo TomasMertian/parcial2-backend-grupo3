@@ -15,7 +15,7 @@ const Login = () => {
         setLoading(true);
 
         try {
-            const res = await api.post('/usuarios/', formData);
+            const res = await api.post('/usuarios/login', formData);
             localStorage.setItem('token', res.data.token);
             setUser({ logged: true });
         } catch (error) {
