@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import api from '../services/api';
 import { AuthContext } from "../context/AuthContext";
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -17,7 +18,9 @@ const Login = () => {
         try {
             const res = await api.post('/usuarios/login', formData);
             localStorage.setItem('token', res.data.token);
-            setUser({ logged: true });
+            
+            const decoded = jwtDecode(res.data.token);
+            setUser(decoded);
         } catch (error) {
             console.error(error);
             alert("Credenciales incorrectas");

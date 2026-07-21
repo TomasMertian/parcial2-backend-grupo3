@@ -6,6 +6,10 @@ import Login from './pages/Login';
 import Register from "./pages/Register";
 import React from 'react';
 import './styles/global.css';
+import Dashboard from "./pages/Dashboard";
+import AddGame from "./pages/AddGame";
+import UpdateGame from "./pages/UpdateGame";
+import GameDetail from "./pages/GameDetail";
 
 function App() {
     return (
@@ -18,12 +22,25 @@ function App() {
                         {/*Ruta por defecto que redirige al login*/}
                         <Route path="/" element={<Navigate to="/login" />} />
 
-                        {/*Ejemplo de ruta privada*/}
                         <Route path="/dashboard" element={
                             <PrivateRoute>
-                                <h1>Zona privada - Colección de Juegos</h1>
-                            </PrivateRoute>
-                        } />
+                                <Dashboard />
+                            </PrivateRoute>} />
+
+                        <Route path="/add-game" element={
+                            <PrivateRoute>
+                                <AddGame />
+                            </PrivateRoute>} />
+
+                        <Route path="/update-game/:id_videojuego" element={
+                            <PrivateRoute>
+                                <UpdateGame />
+                            </PrivateRoute>} />
+                        
+                        <Route path="/game-detail/:id_videojuego" element={
+                            <PrivateRoute>
+                                <GameDetail />
+                            </PrivateRoute>} />
                     </Routes>
                 </Layout>
             </BrowserRouter>
