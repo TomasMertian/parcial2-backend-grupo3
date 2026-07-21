@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+const verificarToken = require("../middleware/authMiddleware");
 const {
   agregarAColeccion,
   obtenerColeccionUsuario,
@@ -8,12 +9,12 @@ const {
   eliminarJuegoColeccion,
 } = require("../controllers/coleccionUsuarioController");
 
-router.post("/", agregarAColeccion);
+router.post("/",verificarToken, agregarAColeccion);
 
-router.get("/:id_usuario", obtenerColeccionUsuario);
+router.get("/:id_usuario",verificarToken, obtenerColeccionUsuario);
 
-router.put("/:id_usuario/:id_videojuego", actualizarJuegoColeccion);
+router.put("/:id_usuario/:id_videojuego",verificarToken, actualizarJuegoColeccion);
 
-router.delete("/:id_usuario/:id_videojuego", eliminarJuegoColeccion);
+router.delete("/:id_usuario/:id_videojuego",verificarToken, eliminarJuegoColeccion);
 
 module.exports = router;
