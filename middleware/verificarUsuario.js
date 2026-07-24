@@ -25,4 +25,4 @@ const verificarUsuario = async (req, res, next) => {
     }
 };
 
-module.exports = verificarUsuario;
+module.exports = verificarUsuario; 

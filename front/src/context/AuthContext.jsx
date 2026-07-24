@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import React from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 export const AuthContext = createContext();
 
@@ -9,10 +10,13 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
+        
         if (token) {
-            //si hay un token se marca al usuario como logueado
-            setUser({ logged: true });
-        }
+        // Si hay un token, se recuperan los datos del usuario logueado
+        const decoded = jwtDecode(token);
+        setUser(decoded);
+    }
+
         setLoading(false);
     }, []);
 
