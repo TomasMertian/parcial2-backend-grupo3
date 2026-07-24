@@ -2,11 +2,13 @@ import React, { useState, useContext } from "react";
 import api from '../services/api';
 import { AuthContext } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const { setUser } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -21,6 +23,9 @@ const Login = () => {
             
             const decoded = jwtDecode(res.data.token);
             setUser(decoded);
+
+            navigate('/dashboard');
+            
         } catch (error) {
             console.error(error);
             alert("Credenciales incorrectas");
