@@ -83,3 +83,89 @@ nav a:hover {
     color: var(--text-main);
     border-radius: 4px;
 }
+
+/* ---------- Formularios ---------- */
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 450px;
+}
+
+input,
+select {
+    padding: 12px;
+    background-color: var(--bg-main);
+    border: 1px solid var(--primary);
+    color: var(--text-main);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+input::placeholder {
+    color: #cbd5e1;
+}
+
+
+/* ---------- Dashboard ---------- */
+
+.dashboard h1 {
+    margin-bottom: 20px;
+}
+
+.games-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.dashboard-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    margin: 20px 0;
+}
+
+
+/* ---------- GameCard ---------- */
+
+.game-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 20px;
+    transition: 0.3s;
+}
+
+.game-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 12px var(--accent);
+}
+
+.game-card h3 {
+    color: var(--primary);
+    margin-top: 0;
+}
+
+.game-card p {
+    margin: 8px 0;
+}
+
+.game-card div {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+
+/* ---------- Footer ---------- */
+
+.footer {
+    margin-top: 2rem;
+    text-align: center;
+    color: var(--text-main);
+}
