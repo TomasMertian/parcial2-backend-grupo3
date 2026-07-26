@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { agregarJuego } from "../services/gamesService";
 
@@ -10,6 +11,7 @@ import Button from "../components/ui/Button";
 const AddGame = () => {
 
     const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         id_videojuego: "",
@@ -41,6 +43,7 @@ const AddGame = () => {
             });
 
             alert("Juego agregado correctamente");
+            navigate("/dashboard");
 
             setFormData({
                 id_videojuego: "",

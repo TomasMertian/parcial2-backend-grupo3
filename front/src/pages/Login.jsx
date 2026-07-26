@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import api from '../services/api';
 import { AuthContext } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -56,6 +56,10 @@ const Login = () => {
                 <button type="submit" disabled={loading}>
                     {loading ? 'Cargando...' : 'Iniciar Sesión'}
                 </button>
+
+                <div style={{ marginTop: "15px", textAlign: "center" }}>
+                    <p>¿No estás registrado? <Link to="/register">Regístrate aquí</Link></p>
+                </div>
             </form>
         </div>
     );
