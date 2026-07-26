@@ -521,7 +521,7 @@ npx sequelize-cli db:seed:all
 
 ## **Integrante:** Tomás Mertian
 
-**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts`
+**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts` · `validarColeccionPost.js` · `validarColeccionPut.js` · `validarColeccionExiste.js` · `validarPropiedadColeccion.js`
 
 ---
 
@@ -674,6 +674,100 @@ const ColeccionUsuario = coleccionUsuarioFactory(sequelize)
 ```ts
 export { sequelize, Sequelize, Usuario, Videojuego, ColeccionUsuario }
 ```
+
+---
+
+## 🛡️ Middlewares de Colección
+
+### Descripción
+Conjunto de middlewares que implementan la capa de validación y autorización para las rutas de colección. Validan datos de entrada, verifican existencia de registros en la BD y garantizan que cada usuario solo acceda a su propia colección. Usan `express-validator` para formato y Sequelize para verificaciones de negocio.
+
+---
+
+### 📄 `validarColeccionPost.js`
+
+Middleware para **POST /coleccion**. Valida y sanitiza el body.
+
+| Campo | Tipo | Obligatorio | Regla |
+|---|---|---|---|
+| `id_usuario` | `INTEGER` | Sí | `isInt({ min: 1 })` |
+| `id_videojuego` | `INTEGER` | Sí | `isInt({ min: 1 })` |
+| `estado` | `STRING` | No | Sanitiza `'Pendiente'` → `'en_progreso'`; `isIn(['jugando', 'en_progreso', 'completado'])` |
+| `calificacion` | `FLOAT` | No | `isFloat({ min: 1, max: 10 })` |
+| `tiempo_jugado` | `INTEGER` | No | `isInt({ min: 0 })` |
+
+Si hay errores → `400 Bad Request` con `{ error, detalles }`. Si es válido → `next()`.
+
+```js
+module.exports = validarCamposPost;
+```
+
+---
+
+### 📄 `validarColeccionPut.js`
+
+Middleware para **PUT /coleccion/:id_usuario/:id_videojuego**. Valida params de URL y body.
+
+**Parámetros de URL:**
+
+| Campo | Regla |
+|---|---|
+| `id_usuario` | `isInt({ min: 1 })` |
+| `id_videojuego` | `isInt({ min: 1 })` |
+
+**Body** (mismas reglas que POST para `estado`, `calificacion`, `tiempo_jugado`).
+
+Los valores aceptados para `estado` son: `'jugando'`, `'en_progreso'`, `'completado'` (con variantes de mayúscula). `'Pendiente'` se sanitiza a `'en_progreso'`.
+
+```js
+module.exports = validarCamposPut;
+```
+
+---
+
+### 📄 `validarColeccionExiste.js`
+
+Verifica que el registro `(id_usuario, id_videojuego)` exista en la BD antes de modificar o eliminar.
+
+- Consulta `ColeccionUsuario.findOne({ where: { id_usuario, id_videojuego } })`.
+- Si **no existe** → `404 Not Found`.
+- Si **existe** → adjunta el registro a `req.coleccionExistente` y llama a `next()`.
+- Si hay error → `500 Internal Server Error`.
+
+```js
+module.exports = validarColeccionExiste;
+```
+
+---
+
+### 📄 `validarPropiedadColeccion.js`
+
+Garantiza que el usuario autenticado solo acceda a su propia colección.
+
+- Obtiene `req.user.id` (del JWT).
+- Lee el ID de la solicitud:
+  - **POST** → `req.body.id_usuario`
+  - **GET / PUT / DELETE** → `req.params.id_usuario`
+- Si **no coinciden** → `403 Forbidden`.
+- Si **coinciden** → `next()`.
+
+```js
+module.exports = validarPropiedadColeccion;
+```
+
+---
+
+### 🔗 Cadena de Middlewares en las Rutas
+
+| Ruta | Middlewares |
+|---|---|
+| **POST** `/coleccion` | `verificarToken` → `validarColeccionPost` → `validarPropiedadColeccion` → controlador |
+| **GET** `/coleccion/:id_usuario` | `verificarToken` → `validarPropiedadColeccion` → controlador |
+| **PUT** `/coleccion/:id_usuario/:id_videojuego` | `verificarToken` → `validarColeccionPut` → `validarPropiedadColeccion` → `validarColeccionExiste` → controlador |
+| **DELETE** `/coleccion/:id_usuario/:id_videojuego` | `verificarToken` → `validarPropiedadColeccion` → `validarColeccionExiste` → controlador |
+
+---
+
 # Integrante Santiago De dios
 # Documentación de Migraciones, Modelos y Entorno Dockerizado
 
@@ -755,3 +849,92 @@ Para gestionar la estructura de la base de datos desde cero, se utilizaron los s
     ```bash
     npx sequelize-cli db:migrate
     ```
+
+#  Variables de Entorno (`.env`)
+
+Para que el servidor se conecte correctamente a la base de datos (NeonDB) y gestione los tokens de autenticación, es necesario crear un archivo `.env` en la raíz del backend con el siguiente formato:
+
+```env
+PORT=3001
+NODE_ENV=development
+
+# Configuración de Base de Datos (NeonDB / PostgreSQL)
+DATABASE_URL=postgresql://usuario:password@host-de-neon.tech/neondb?sslmode=require
+
+# Seguridad JWT y CORS
+JWT_SECRET=tu_clave_secreta_super_segura
+CORS_ORIGIN=http://localhost:3000
+```
+
+##  Endpoints de Autenticación
+
+### 1. Registro de Usuario
+
+Crea un nuevo usuario en la base de datos. La contraseña se procesa y se almacena encriptada mediante `bcrypt`.
+
+- **Método:** `POST`
+- **URL:** `http://localhost:3001/api/usuarios/register` (o `/registro`)
+- **Headers:** `Content-Type: application/json`
+- **Body (`JSON`):**
+
+```json
+{
+  "nombre": "Nombre Usuario",
+  "email": "usuario@ejemplo.com",
+  "password": "miContraseña123"
+}
+```
+
+- **Respuesta Exitosa (`201 Created` / `200 OK`):**
+
+```json
+{
+  "message": "Usuario registrado exitosamente",
+  "usuario": {
+    "id_usuario": 1,
+    "nombre": "Nombre Usuario",
+    "email": "usuario@ejemplo.com"
+  }
+}
+```
+
+### 2. Inicio de Sesión (Login)
+
+Autentica las credenciales del usuario y genera un token JWT para peticiones protegidas.
+
+- **Método:** `POST`
+- **URL:** `http://localhost:3001/api/usuarios/login`
+- **Headers:** `Content-Type: application/json`
+- **Body (`JSON`):**
+
+```json
+{
+  "email": "usuario@ejemplo.com",
+  "password": "miContraseña123"
+}
+```
+
+- **Respuesta Exitosa (`200 OK`):**
+
+```json
+{
+  "message": "Login exitoso",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "usuario": {
+    "id_usuario": 1,
+    "nombre": "Nombre Usuario",
+    "email": "usuario@ejemplo.com"
+  }
+}
+```
+
+- **Respuestas de Error:**
+  - `401 Unauthorized`: `"Contraseña incorrecta"` o `"Usuario no encontrado"`
+
+##  Cómo consumir Endpoints Protegidos
+
+Para realizar peticiones a rutas que requieran autenticación previa, se debe enviar el token devuelto en el login dentro del encabezado `Authorization`:
+
+- **Header:** `Authorization`
+- **Valor:** `Bearer <TU_JWT_TOKEN>`
+

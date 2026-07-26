@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 import { actualizarJuego } from "../services/gamesService";
@@ -14,6 +14,8 @@ const UpdateGame = () => {
     const { user } = useContext(AuthContext);
 
     const { id_videojuego } = useParams();
+
+    const navigate = useNavigate();
 
 
     const [formData, setFormData] = useState({
@@ -48,6 +50,7 @@ const UpdateGame = () => {
 
 
             alert("Juego actualizado correctamente");
+            navigate("/dashboard");
 
 
         } catch (error) {
