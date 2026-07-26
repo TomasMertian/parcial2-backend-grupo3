@@ -1149,3 +1149,16 @@ Respuesta
 ```
 
 ---
+# Alumna: Renata Turani
+## Funcionalidad realizada: Cache con Redis
+
+Para que la aplicacion sea mas rapida y no cargar la base de datos con consultas repetidas, realizamos un sistema de cache usando Redis
+
+### Desarrollo:
+1. Consulta previa: cuando alguien entra a ver el detalle de un videojuego (`GET /api/videojuegos/:id`), el servidor primero se fija en el cache de Redis si ya tenemos ese juego guardado
+2. Si ya esta guardado: Te lo devuelve instantaneamente, ahorrando tiempo y evitando ir hasta PostgreSQL
+3. Si es la primera vez que se pide: El sistema va a buscarlo a la base de datos como lo hace usualmente, pero antes de responderle al usuario, guarda una copia en Redis que dura 1 hora. Asi, la proxima vez que alguien lo pida, ya queda al alcance
+
+El servicio corre en un contenedor de Docker junto con el resto del proyecto, conectado mediante el cliente de Node.js.
+
+--- 
