@@ -849,3 +849,83 @@ Para gestionar la estructura de la base de datos desde cero, se utilizaron los s
     ```bash
     npx sequelize-cli db:migrate
     ```
+🔑 Variables de Entorno (.env)
+Para que el servidor se conecte correctamente a la base de datos (NeonDB) y gestione los tokens de autenticación, es necesario crear un archivo .env en la raíz del backend con el siguiente formato:
+
+Fragmento de código
+PORT=3001
+NODE_ENV=development
+
+# Configuración de Base de Datos (NeonDB / PostgreSQL)
+DATABASE_URL=postgresql://usuario:password@host-de-neon.tech/neondb?sslmode=require
+
+# Seguridad JWT y CORS
+JWT_SECRET=tu_clave_secreta_super_segura
+CORS_ORIGIN=http://localhost:3000
+🚀 Endpoints de Autenticación
+1. Registro de Usuario
+Crea un nuevo usuario en la base de datos. La contraseña se procesa y se almacena encriptada mediante bcrypt.
+
+Método: POST
+
+URL: http://localhost:3001/api/usuarios/register (o /registro)
+
+Headers: Content-Type: application/json
+
+Body (JSON):
+
+JSON
+{
+  "nombre": "Nombre Usuario",
+  "email": "usuario@ejemplo.com",
+  "password": "miContraseña123"
+}
+Respuesta Exitosa (201 Created / 200 OK):
+
+JSON
+{
+  "message": "Usuario registrado exitosamente",
+  "usuario": {
+    "id_usuario": 1,
+    "nombre": "Nombre Usuario",
+    "email": "usuario@ejemplo.com"
+  }
+}
+2. Inicio de Sesión (Login)
+Autentica las credenciales del usuario y genera un token JWT para peticiones protegidas.
+
+Método: POST
+
+URL: http://localhost:3001/api/usuarios/login
+
+Headers: Content-Type: application/json
+
+Body (JSON):
+
+JSON
+{
+  "email": "usuario@ejemplo.com",
+  "password": "miContraseña123"
+}
+Respuesta Exitosa (200 OK):
+
+JSON
+{
+  "message": "Login exitoso",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "usuario": {
+    "id_usuario": 1,
+    "nombre": "Nombre Usuario",
+    "email": "usuario@ejemplo.com"
+  }
+}
+Respuestas de Error:
+
+401 Unauthorized: "Contraseña incorrecta" o "Usuario no encontrado"
+
+🛡️ Cómo consumir Endpoints Protegidos
+Para realizar peticiones a rutas que requieran autenticación previa, se debe enviar el token devuelto en el login dentro del encabezado Authorization:
+
+Header: Authorization
+
+Valor: Bearer <TU_JWT_TOKEN>
