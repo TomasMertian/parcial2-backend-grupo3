@@ -521,7 +521,7 @@ npx sequelize-cli db:seed:all
 
 ## **Integrante:** Tomás Mertian
 
-**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts`
+**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts` · `validarColeccionPost.js` · `validarColeccionPut.js` · `validarColeccionExiste.js` · `validarPropiedadColeccion.js`
 
 ---
 
@@ -674,6 +674,100 @@ const ColeccionUsuario = coleccionUsuarioFactory(sequelize)
 ```ts
 export { sequelize, Sequelize, Usuario, Videojuego, ColeccionUsuario }
 ```
+
+---
+
+## 🛡️ Middlewares de Colección
+
+### Descripción
+Conjunto de middlewares que implementan la capa de validación y autorización para las rutas de colección. Validan datos de entrada, verifican existencia de registros en la BD y garantizan que cada usuario solo acceda a su propia colección. Usan `express-validator` para formato y Sequelize para verificaciones de negocio.
+
+---
+
+### 📄 `validarColeccionPost.js`
+
+Middleware para **POST /coleccion**. Valida y sanitiza el body.
+
+| Campo | Tipo | Obligatorio | Regla |
+|---|---|---|---|
+| `id_usuario` | `INTEGER` | Sí | `isInt({ min: 1 })` |
+| `id_videojuego` | `INTEGER` | Sí | `isInt({ min: 1 })` |
+| `estado` | `STRING` | No | Sanitiza `'Pendiente'` → `'en_progreso'`; `isIn(['jugando', 'en_progreso', 'completado'])` |
+| `calificacion` | `FLOAT` | No | `isFloat({ min: 1, max: 10 })` |
+| `tiempo_jugado` | `INTEGER` | No | `isInt({ min: 0 })` |
+
+Si hay errores → `400 Bad Request` con `{ error, detalles }`. Si es válido → `next()`.
+
+```js
+module.exports = validarCamposPost;
+```
+
+---
+
+### 📄 `validarColeccionPut.js`
+
+Middleware para **PUT /coleccion/:id_usuario/:id_videojuego**. Valida params de URL y body.
+
+**Parámetros de URL:**
+
+| Campo | Regla |
+|---|---|
+| `id_usuario` | `isInt({ min: 1 })` |
+| `id_videojuego` | `isInt({ min: 1 })` |
+
+**Body** (mismas reglas que POST para `estado`, `calificacion`, `tiempo_jugado`).
+
+Los valores aceptados para `estado` son: `'jugando'`, `'en_progreso'`, `'completado'` (con variantes de mayúscula). `'Pendiente'` se sanitiza a `'en_progreso'`.
+
+```js
+module.exports = validarCamposPut;
+```
+
+---
+
+### 📄 `validarColeccionExiste.js`
+
+Verifica que el registro `(id_usuario, id_videojuego)` exista en la BD antes de modificar o eliminar.
+
+- Consulta `ColeccionUsuario.findOne({ where: { id_usuario, id_videojuego } })`.
+- Si **no existe** → `404 Not Found`.
+- Si **existe** → adjunta el registro a `req.coleccionExistente` y llama a `next()`.
+- Si hay error → `500 Internal Server Error`.
+
+```js
+module.exports = validarColeccionExiste;
+```
+
+---
+
+### 📄 `validarPropiedadColeccion.js`
+
+Garantiza que el usuario autenticado solo acceda a su propia colección.
+
+- Obtiene `req.user.id` (del JWT).
+- Lee el ID de la solicitud:
+  - **POST** → `req.body.id_usuario`
+  - **GET / PUT / DELETE** → `req.params.id_usuario`
+- Si **no coinciden** → `403 Forbidden`.
+- Si **coinciden** → `next()`.
+
+```js
+module.exports = validarPropiedadColeccion;
+```
+
+---
+
+### 🔗 Cadena de Middlewares en las Rutas
+
+| Ruta | Middlewares |
+|---|---|
+| **POST** `/coleccion` | `verificarToken` → `validarColeccionPost` → `validarPropiedadColeccion` → controlador |
+| **GET** `/coleccion/:id_usuario` | `verificarToken` → `validarPropiedadColeccion` → controlador |
+| **PUT** `/coleccion/:id_usuario/:id_videojuego` | `verificarToken` → `validarColeccionPut` → `validarPropiedadColeccion` → `validarColeccionExiste` → controlador |
+| **DELETE** `/coleccion/:id_usuario/:id_videojuego` | `verificarToken` → `validarPropiedadColeccion` → `validarColeccionExiste` → controlador |
+
+---
+
 # Integrante Santiago De dios
 # Documentación de Migraciones, Modelos y Entorno Dockerizado
 
