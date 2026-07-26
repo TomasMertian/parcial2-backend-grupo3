@@ -1162,3 +1162,65 @@ Para que la aplicacion sea mas rapida y no cargar la base de datos con consultas
 El servicio corre en un contenedor de Docker junto con el resto del proyecto, conectado mediante el cliente de Node.js.
 
 --- 
+
+# Integrante: Federica Vignales
+## Front: Gestión de colecciones y componentes UI
+Mi trabajo se centró principalmente en el desarrollo del frontend relacionado con la gestión de la colección personal de videojuegos de cada usuario, utilizando React y componentes reutilizables.
+
+### Componentes UI
+Desarrollé componentes reutilizables dentro de `components/ui/` para evitar repetir código y mantener una estructura más organizada:
+
+`Button.jsx`: creé un botón reutilizable que permite configurar su tipo, evento de clic y estado habilitado/deshabilitado.
+`Input.jsx`: desarrollé un componente reutilizable para los campos de entrada, permitiendo configurar su tipo, valor, nombre, placeholder y evento `onChange`.
+`Select.jsx`: implementé un componente para listas desplegables que recibe dinámicamente las opciones que debe mostrar.
+`GameCard.jsx`: desarrollé la tarjeta utilizada para representar cada juego de la colección. En ella se muestran el título, estado, calificación y tiempo jugado, además de las opciones para ver el detalle, actualizar o eliminar el juego.
+
+### Dashboard: Colección del usuario
+Desarrollé `Dashboard.jsx` como la página principal donde se muestra la colección de juegos del usuario autenticado.
+
+Al cargar la página, obtengo la colección mediante `obtenerColeccion()` utilizando el ID del usuario. Luego muestro cada juego mediante el componente reutilizable `GameCard`.
+
+También implementé un sistema de búsqueda y filtros que permite encontrar juegos por título, género y plataforma.
+
+Los géneros y plataformas disponibles se generan dinámicamente a partir de los juegos que forman parte de la colección.
+
+Desde el Dashboard también implementé las acciones para eliminar un juego y navegar hacia las páginas de actualización y detalle.
+
+### Agregar juegos a la colección
+En `AddGame.jsx` desarrollé el formulario que permite agregar un videojuego a la colección personal del usuario.
+
+El formulario permite registrar el ID del videojuego, su estado, calificación y tiempo jugado. Para el estado utilicé las opciones Jugando, Completado y Pendiente.
+
+Al enviar el formulario, utilizo `agregarJuego()` para enviar los datos a la API asociándolos al usuario autenticado. Si la operación se realiza correctamente, muestro un mensaje y vuelvo al Dashboard.
+
+### Actualizar juegos
+En `UpdateGame.jsx` desarrollé el formulario para actualizar la información de un juego que ya pertenece a la colección.
+
+Permito modificar el estado, la calificación y el tiempo jugado. Para realizar la actualización utilizo `actualizarJuego()`, enviando el ID del usuario, el ID del videojuego y los nuevos datos.
+
+### Detalle del videojuego
+En `GameDetail.jsx` desarrollé una vista para mostrar la información general de un videojuego seleccionado.
+
+Para obtener los datos utilizo `obtenerVideojuegoPorId()` y muestro información como título, género, plataforma, desarrollador, precio y descripción.
+
+Esta vista se diferencia de la colección porque muestra información propia del videojuego, mientras que la colección contiene los datos específicos de cada usuario sobre ese juego, como su estado, calificación y tiempo jugado.
+
+### Servicios de juegos
+En `services/gamesService.js` desarrollé los métodos encargados de comunicar el frontend con la API para las operaciones relacionadas con videojuegos y colecciones.
+
+Implementé funciones para:
+
+- Obtener la colección de un usuario.
+- Obtener un videojuego por ID.
+- Agregar un juego a una colección.
+- Actualizar un juego de una colección.
+- Eliminar un juego de una colección.
+
+De esta manera, separé las peticiones a la API de la lógica visual de las distintas páginas.
+
+### Estilos
+En `global.css` desarrollé la parte de estilos correspondiente a mi trabajo, principalmente para los formularios, Dashboard y tarjetas de juegos.
+
+Para mostrar la colección utilicé `CSS Grid`, permitiendo que las tarjetas se adapten automáticamente al tamaño de la pantalla. También utilicé `Flexbox` para organizar los controles de búsqueda, filtros y botones.
+
+Además, agregué estilos y efectos visuales para las `GameCard`, como cambios al pasar el cursor, bordes, espaciado y organización de los botones.
