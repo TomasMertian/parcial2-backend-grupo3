@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const validarUsuario = require("../middleware/validarUsuario");
+const verificarUsuario = require("../middleware/verificarUsuario");
+
 
 const {
   registrarUsuario,
@@ -13,12 +16,25 @@ const verificarToken = require("../middleware/authMiddleware");
 
 router.post("/login",login)
 
-router.post("/", registrarUsuario);
+router.post("/", validarUsuario, registrarUsuario);
 
-router.get("/:id",verificarToken, obtenerUsuarioPorId);
+router.get("/:id", 
+  verificarToken, 
+  verificarUsuario, 
+  obtenerUsuarioPorId);
 
-router.put("/:id",verificarToken, actualizarUsuario);
+router.put(
+    "/:id",
+    verificarToken,
+    verificarUsuario,
+    actualizarUsuario
+);
 
-router.delete("/:id",verificarToken, eliminarUsuario);
+router.delete(
+    "/:id",
+    verificarToken,
+    verificarUsuario,
+    eliminarUsuario
+);
 
 module.exports = router;
