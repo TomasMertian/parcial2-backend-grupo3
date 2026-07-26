@@ -1,4 +1,5 @@
 import { Model, DataTypes, Sequelize } from 'sequelize';
+const bcrypt = require('bcryptjs');
 
 export interface UsuarioAttributes {
   id_usuario: number;
@@ -14,6 +15,9 @@ class Usuario extends Model<UsuarioAttributes, UsuarioCreationAttributes> {
   declare nombre: string;
   declare email: string;
   declare password: string;
+  async validarPassword (password:string): Promise<boolean>{
+    return await bcrypt.compare(password, this.password);
+  }
 }
 
 export default (sequelize: Sequelize) => {
@@ -43,7 +47,12 @@ export default (sequelize: Sequelize) => {
     sequelize,
     modelName: 'Usuario',
     tableName: 'Users',
-    timestamps: true
+    timestamps: true,
+    hooks: {
+      beforeCreate: async (user: Usuario) => {
+        user.password = await bcrypt.hash(user.password,10);
+      }
+    } 
   });
   return Usuario;
 };

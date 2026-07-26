@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+const validarUsuario = require("../middleware/validarUsuario");
+const verificarUsuario = require("../middleware/verificarUsuario");
+
 
 const {
   registrarUsuario,
@@ -8,12 +11,30 @@ const {
   eliminarUsuario,
 } = require("../controllers/userController");
 
-router.post("/", registrarUsuario);
+const { login } = require("../controllers/authController");
+const verificarToken = require("../middleware/authMiddleware");
 
-router.get("/:id", obtenerUsuarioPorId);
+router.post("/login",login)
 
-router.put("/:id", actualizarUsuario);
+router.post("/", validarUsuario, registrarUsuario);
 
-router.delete("/:id", eliminarUsuario);
+router.get("/:id", 
+  verificarToken, 
+  verificarUsuario, 
+  obtenerUsuarioPorId);
+
+router.put(
+    "/:id",
+    verificarToken,
+    verificarUsuario,
+    actualizarUsuario
+);
+
+router.delete(
+    "/:id",
+    verificarToken,
+    verificarUsuario,
+    eliminarUsuario
+);
 
 module.exports = router;

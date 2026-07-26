@@ -521,7 +521,7 @@ npx sequelize-cli db:seed:all
 
 ## **Integrante:** Tomás Mertian
 
-**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts`
+**Archivos:** `Usuario.ts` · `Videojuegos.ts` · `ColeccionUsuario.ts` · `index.ts` · `validarColeccionPost.js` · `validarColeccionPut.js` · `validarColeccionExiste.js` · `validarPropiedadColeccion.js`
 
 ---
 
@@ -674,6 +674,100 @@ const ColeccionUsuario = coleccionUsuarioFactory(sequelize)
 ```ts
 export { sequelize, Sequelize, Usuario, Videojuego, ColeccionUsuario }
 ```
+
+---
+
+## 🛡️ Middlewares de Colección
+
+### Descripción
+Conjunto de middlewares que implementan la capa de validación y autorización para las rutas de colección. Validan datos de entrada, verifican existencia de registros en la BD y garantizan que cada usuario solo acceda a su propia colección. Usan `express-validator` para formato y Sequelize para verificaciones de negocio.
+
+---
+
+### 📄 `validarColeccionPost.js`
+
+Middleware para **POST /coleccion**. Valida y sanitiza el body.
+
+| Campo | Tipo | Obligatorio | Regla |
+|---|---|---|---|
+| `id_usuario` | `INTEGER` | Sí | `isInt({ min: 1 })` |
+| `id_videojuego` | `INTEGER` | Sí | `isInt({ min: 1 })` |
+| `estado` | `STRING` | No | Sanitiza `'Pendiente'` → `'en_progreso'`; `isIn(['jugando', 'en_progreso', 'completado'])` |
+| `calificacion` | `FLOAT` | No | `isFloat({ min: 1, max: 10 })` |
+| `tiempo_jugado` | `INTEGER` | No | `isInt({ min: 0 })` |
+
+Si hay errores → `400 Bad Request` con `{ error, detalles }`. Si es válido → `next()`.
+
+```js
+module.exports = validarCamposPost;
+```
+
+---
+
+### 📄 `validarColeccionPut.js`
+
+Middleware para **PUT /coleccion/:id_usuario/:id_videojuego**. Valida params de URL y body.
+
+**Parámetros de URL:**
+
+| Campo | Regla |
+|---|---|
+| `id_usuario` | `isInt({ min: 1 })` |
+| `id_videojuego` | `isInt({ min: 1 })` |
+
+**Body** (mismas reglas que POST para `estado`, `calificacion`, `tiempo_jugado`).
+
+Los valores aceptados para `estado` son: `'jugando'`, `'en_progreso'`, `'completado'` (con variantes de mayúscula). `'Pendiente'` se sanitiza a `'en_progreso'`.
+
+```js
+module.exports = validarCamposPut;
+```
+
+---
+
+### 📄 `validarColeccionExiste.js`
+
+Verifica que el registro `(id_usuario, id_videojuego)` exista en la BD antes de modificar o eliminar.
+
+- Consulta `ColeccionUsuario.findOne({ where: { id_usuario, id_videojuego } })`.
+- Si **no existe** → `404 Not Found`.
+- Si **existe** → adjunta el registro a `req.coleccionExistente` y llama a `next()`.
+- Si hay error → `500 Internal Server Error`.
+
+```js
+module.exports = validarColeccionExiste;
+```
+
+---
+
+### 📄 `validarPropiedadColeccion.js`
+
+Garantiza que el usuario autenticado solo acceda a su propia colección.
+
+- Obtiene `req.user.id` (del JWT).
+- Lee el ID de la solicitud:
+  - **POST** → `req.body.id_usuario`
+  - **GET / PUT / DELETE** → `req.params.id_usuario`
+- Si **no coinciden** → `403 Forbidden`.
+- Si **coinciden** → `next()`.
+
+```js
+module.exports = validarPropiedadColeccion;
+```
+
+---
+
+### 🔗 Cadena de Middlewares en las Rutas
+
+| Ruta | Middlewares |
+|---|---|
+| **POST** `/coleccion` | `verificarToken` → `validarColeccionPost` → `validarPropiedadColeccion` → controlador |
+| **GET** `/coleccion/:id_usuario` | `verificarToken` → `validarPropiedadColeccion` → controlador |
+| **PUT** `/coleccion/:id_usuario/:id_videojuego` | `verificarToken` → `validarColeccionPut` → `validarPropiedadColeccion` → `validarColeccionExiste` → controlador |
+| **DELETE** `/coleccion/:id_usuario/:id_videojuego` | `verificarToken` → `validarPropiedadColeccion` → `validarColeccionExiste` → controlador |
+
+---
+
 # Integrante Santiago De dios
 # Documentación de Migraciones, Modelos y Entorno Dockerizado
 
@@ -755,3 +849,378 @@ Para gestionar la estructura de la base de datos desde cero, se utilizaron los s
     ```bash
     npx sequelize-cli db:migrate
     ```
+
+#  Variables de Entorno (`.env`)
+
+Para que el servidor se conecte correctamente a la base de datos (NeonDB) y gestione los tokens de autenticación, es necesario crear un archivo `.env` en la raíz del backend con el siguiente formato:
+
+```env
+PORT=3001
+NODE_ENV=development
+
+# Configuración de Base de Datos (NeonDB / PostgreSQL)
+DATABASE_URL=postgresql://usuario:password@host-de-neon.tech/neondb?sslmode=require
+
+# Seguridad JWT y CORS
+JWT_SECRET=tu_clave_secreta_super_segura
+CORS_ORIGIN=http://localhost:3000
+```
+
+##  Endpoints de Autenticación
+
+### 1. Registro de Usuario
+
+Crea un nuevo usuario en la base de datos. La contraseña se procesa y se almacena encriptada mediante `bcrypt`.
+
+- **Método:** `POST`
+- **URL:** `http://localhost:3001/api/usuarios/register` (o `/registro`)
+- **Headers:** `Content-Type: application/json`
+- **Body (`JSON`):**
+
+```json
+{
+  "nombre": "Nombre Usuario",
+  "email": "usuario@ejemplo.com",
+  "password": "miContraseña123"
+}
+```
+
+- **Respuesta Exitosa (`201 Created` / `200 OK`):**
+
+```json
+{
+  "message": "Usuario registrado exitosamente",
+  "usuario": {
+    "id_usuario": 1,
+    "nombre": "Nombre Usuario",
+    "email": "usuario@ejemplo.com"
+  }
+}
+```
+
+### 2. Inicio de Sesión (Login)
+
+Autentica las credenciales del usuario y genera un token JWT para peticiones protegidas.
+
+- **Método:** `POST`
+- **URL:** `http://localhost:3001/api/usuarios/login`
+- **Headers:** `Content-Type: application/json`
+- **Body (`JSON`):**
+
+```json
+{
+  "email": "usuario@ejemplo.com",
+  "password": "miContraseña123"
+}
+```
+
+- **Respuesta Exitosa (`200 OK`):**
+
+```json
+{
+  "message": "Login exitoso",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "usuario": {
+    "id_usuario": 1,
+    "nombre": "Nombre Usuario",
+    "email": "usuario@ejemplo.com"
+  }
+}
+```
+
+- **Respuestas de Error:**
+  - `401 Unauthorized`: `"Contraseña incorrecta"` o `"Usuario no encontrado"`
+
+##  Cómo consumir Endpoints Protegidos
+
+Para realizar peticiones a rutas que requieran autenticación previa, se debe enviar el token devuelto en el login dentro del encabezado `Authorization`:
+
+- **Header:** `Authorization`
+- **Valor:** `Bearer <TU_JWT_TOKEN>`
+
+# Documentación del Front (Infraestructura, Autenticación y Layout)
+## Integrante: Lavizzari Ariadna Lourdes
+
+## 1. Introducción y Elección de Tecnología:
+En esta sección decidí utilizar la extensión `.jsx` en lugar del `.js` clásico para aquellos archivos que manejen componentes de React.
+
+- ***¿Por qué `.jsx`?*** -> Esta extensión me permitió utilizar JSX (JavaScript XML), permitiéndome escribir elementos visuales con una sintaxis similar a HTML directamente en el código JavaScript de forma cómoda y estructurada.
+
+
+## 2. Estructura y Archivos:
+📂 `src/components/Layout.jsx`:
+- `Layout.jsx` actúa como el molde visual y estructural de la base de la página. Este muestra una barra de navegación superior y un pie de página, dejando en el centro un espacio para cargar las distintas pantallas a las que se dirija el usuario.
+- ***Punto clave:*** Utiliza la propiedad `{children}` para recibir y cargar el contenido de cualquier página dentro de la pantalla:
+
+```JS
+<main className="container">{children}</main>
+```
+---
+
+📂 `src/context/AuthContext.jsx`:
+- ***¿Qué hace?*** -> Funciona como la "Memoria global" de la sesión. Cuando se abre la página, revisa si hay un token guardado en el navegador para mantener al usuario registrado sin que tenga que iniciar sesión todo el tiempo.
+- ***Punto clave*** -> Al inicio intercepta el almacenamiento local para verificar si existe (o no) un token activo:
+```JS
+const token = localStorage.getItem('token');
+```
+
+---
+
+📂`src/services/api.js`:
+***¿Qué hace?*** -> Se encarga de centralizar la comunicación HTTP con el backend usando la librería de Axios. Su principal ventaja es que evita repetir la URL base en cada llamado hecho desde el front.
+
+📂 `src/pages/Login.jsx`
+***Qué hace?*** -> Gestiona la pantalla del Login. Captura el mail y la contraseña ingresados por el usuario, se comunica con el servidor y maneja los estados de carga y errores visuales.
+***Punto clave*** -> Una vez que el servidor valida los datos y responde con éxito, almacena el token JWT recibido en el navegador:
+```JS
+localStorage.setItem('token', res.data.token);
+```
+
+---
+
+📂 `src/pages/Register.jsx`:
+***Qué hace?*** -> Gestiona la pantalla de registro de los nuevos usuarios. Captura los datos ingresados (nombre, mail y contraseña) y los envía al servidor para crear la cuenta.
+
+📂 `src/styles/App.jsx`:
+***¿Qué hace?*** -> Se encarga de conectar todas las páginas (es el núcleo de enrutamiento), define que rutas son públicas (como el login y el registro) y cuáles son especificas para aquellos usuarios ya registrados.
+***Punto clave*** -> Envuelve las vistas protegidas usando el componente de validación para restringir accesos indebidos:
+```JS
+<Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+```
+
+---
+
+## 3. Reporte de pruebas y errores
+Durante el desarrollo del frontend, mi compañera y yo nos encontramos con un inconveniente en el login de mi compañera que en mi entorno local no sucedía.
+
+🔍 El error:
+Al intentar iniciar sesión, la página de mi compañera mostraba un rechazo en la petición, un problema similar al que yo experimente al principio del desarrollo.
+
+🛠️ Solución aplicada:
+En mi caso pude solucionarlo reinstalando y sincronizando bien todas las dependencias del proyecto (`pnpm install`) tanto en el front como en el back y validando que el backend estuviera corriendo en el puerto correcto. 
+⚠️ ``Documento este incidente por si vuelve a replicarse en otra circunstancia.``
+
+
+
+
+SUROP MAITENA
+
+# Middleware de Autenticación y Validación de Usuarios
+
+## Middleware de Autenticación (authMiddleware)
+
+Se implementó un middleware de autenticación utilizando **JSON Web Token (JWT)** para proteger las rutas privadas de la API.
+
+### Funcionalidad
+
+- Obtiene el token desde el encabezado `Authorization`.
+- Verifica que el encabezado tenga el formato `Bearer <token>`.
+- Valida la autenticidad del token mediante `jwt.verify()`.
+- Si el token es válido, almacena la información del usuario autenticado en `req.user`.
+- Si el token no existe o es inválido, devuelve el código de error correspondiente.
+
+### Códigos de respuesta
+
+| Código | Descripción |
+|---------|-------------|
+| 403 | No se proporcionó un token de autenticación. |
+| 401 | Token inválido o expirado. |
+
+### Rutas protegidas
+
+- GET `/api/usuarios/:id`
+- PUT `/api/usuarios/:id`
+- DELETE `/api/usuarios/:id`
+- Todas las rutas correspondientes a la colección del usuario.
+
+---
+
+# Middleware de Verificación de Usuario
+
+Se desarrolló un middleware encargado de comprobar la existencia de un usuario antes de ejecutar determinadas operaciones.
+
+## Funcionalidad
+
+- Obtiene el parámetro `id` desde la URL.
+- Busca el usuario en la base de datos mediante `Usuario.findByPk(id)`.
+- Si el usuario existe, lo almacena en `req.usuario` y continúa con la ejecución.
+- Si no existe, devuelve un error **404 Not Found**.
+
+### Código de respuesta
+
+| Código | Descripción |
+|---------|-------------|
+| 404 | Usuario no encontrado. |
+| 500 | Error interno del servidor. |
+
+### Rutas donde se utiliza
+
+- GET `/api/usuarios/:id`
+- PUT `/api/usuarios/:id`
+- DELETE `/api/usuarios/:id`
+
+---
+
+# Middleware de Validación de Usuario
+
+Se implementó un middleware para validar la información enviada durante el registro de un usuario.
+
+## Validaciones realizadas
+
+Se verifica que el cuerpo de la petición contenga los siguientes campos obligatorios:
+
+- nombre
+- email
+- password
+
+Si alguno de estos campos no está presente, la petición se rechaza con un error **400 Bad Request**.
+
+### Código de respuesta
+
+| Código | Descripción |
+|---------|-------------|
+| 400 | Faltan datos obligatorios. |
+
+### Ruta donde se utiliza
+
+- POST `/api/usuarios`
+
+---
+
+# Login y Generación de Token JWT
+
+Se implementó un sistema de autenticación basado en JSON Web Token.
+
+## Flujo del login
+
+1. El usuario envía su email y contraseña.
+2. Se busca el usuario mediante el email.
+3. Se valida la contraseña utilizando el método `validarPassword()`.
+4. Si las credenciales son correctas, se genera un JWT con una duración de **24 horas**.
+5. El token es devuelto al cliente para acceder a las rutas protegidas.
+
+### Respuestas posibles
+
+| Código | Descripción |
+|---------|-------------|
+| 200 | Login exitoso. |
+| 401 | Contraseña incorrecta. |
+| 404 | Usuario no encontrado. |
+| 500 | Error interno del servidor. |
+
+---
+
+# Flujo de funcionamiento
+
+## Registro de usuario
+
+```
+Cliente
+    │
+    ▼
+validarUsuario
+    │
+    ▼
+registrarUsuario
+    │
+    ▼
+Respuesta
+```
+
+## Consulta, actualización y eliminación
+
+```
+Cliente
+    │
+    ▼
+verificarToken
+    │
+    ▼
+verificarUsuario
+    │
+    ▼
+Controller
+    │
+    ▼
+Base de Datos
+    │
+    ▼
+Respuesta
+```
+
+---
+# Alumna: Renata Turani
+## Funcionalidad realizada: Cache con Redis
+
+Para que la aplicacion sea mas rapida y no cargar la base de datos con consultas repetidas, realizamos un sistema de cache usando Redis
+
+### Desarrollo:
+1. Consulta previa: cuando alguien entra a ver el detalle de un videojuego (`GET /api/videojuegos/:id`), el servidor primero se fija en el cache de Redis si ya tenemos ese juego guardado
+2. Si ya esta guardado: Te lo devuelve instantaneamente, ahorrando tiempo y evitando ir hasta PostgreSQL
+3. Si es la primera vez que se pide: El sistema va a buscarlo a la base de datos como lo hace usualmente, pero antes de responderle al usuario, guarda una copia en Redis que dura 1 hora. Asi, la proxima vez que alguien lo pida, ya queda al alcance
+
+El servicio corre en un contenedor de Docker junto con el resto del proyecto, conectado mediante el cliente de Node.js.
+
+--- 
+
+# Integrante: Federica Vignales
+## Front: Gestión de colecciones y componentes UI
+Mi trabajo se centró principalmente en el desarrollo del frontend relacionado con la gestión de la colección personal de videojuegos de cada usuario, utilizando React y componentes reutilizables.
+
+### Componentes UI
+Desarrollé componentes reutilizables dentro de `components/ui/` para evitar repetir código y mantener una estructura más organizada:
+
+`Button.jsx`: creé un botón reutilizable que permite configurar su tipo, evento de clic y estado habilitado/deshabilitado.
+`Input.jsx`: desarrollé un componente reutilizable para los campos de entrada, permitiendo configurar su tipo, valor, nombre, placeholder y evento `onChange`.
+`Select.jsx`: implementé un componente para listas desplegables que recibe dinámicamente las opciones que debe mostrar.
+`GameCard.jsx`: desarrollé la tarjeta utilizada para representar cada juego de la colección. En ella se muestran el título, estado, calificación y tiempo jugado, además de las opciones para ver el detalle, actualizar o eliminar el juego.
+
+### Dashboard: Colección del usuario
+Desarrollé `Dashboard.jsx` como la página principal donde se muestra la colección de juegos del usuario autenticado.
+
+Al cargar la página, obtengo la colección mediante `obtenerColeccion()` utilizando el ID del usuario. Luego muestro cada juego mediante el componente reutilizable `GameCard`.
+
+También implementé un sistema de búsqueda y filtros que permite encontrar juegos por título, género y plataforma.
+
+Los géneros y plataformas disponibles se generan dinámicamente a partir de los juegos que forman parte de la colección.
+
+Desde el Dashboard también implementé las acciones para eliminar un juego y navegar hacia las páginas de actualización y detalle.
+
+### Agregar juegos a la colección
+En `AddGame.jsx` desarrollé el formulario que permite agregar un videojuego a la colección personal del usuario.
+
+El formulario permite registrar el ID del videojuego, su estado, calificación y tiempo jugado. Para el estado utilicé las opciones Jugando, Completado y Pendiente.
+
+Al enviar el formulario, utilizo `agregarJuego()` para enviar los datos a la API asociándolos al usuario autenticado. Si la operación se realiza correctamente, muestro un mensaje y vuelvo al Dashboard.
+
+### Actualizar juegos
+En `UpdateGame.jsx` desarrollé el formulario para actualizar la información de un juego que ya pertenece a la colección.
+
+Permito modificar el estado, la calificación y el tiempo jugado. Para realizar la actualización utilizo `actualizarJuego()`, enviando el ID del usuario, el ID del videojuego y los nuevos datos.
+
+### Detalle del videojuego
+En `GameDetail.jsx` desarrollé una vista para mostrar la información general de un videojuego seleccionado.
+
+Para obtener los datos utilizo `obtenerVideojuegoPorId()` y muestro información como título, género, plataforma, desarrollador, precio y descripción.
+
+Esta vista se diferencia de la colección porque muestra información propia del videojuego, mientras que la colección contiene los datos específicos de cada usuario sobre ese juego, como su estado, calificación y tiempo jugado.
+
+### Servicios de juegos
+En `services/gamesService.js` desarrollé los métodos encargados de comunicar el frontend con la API para las operaciones relacionadas con videojuegos y colecciones.
+
+Implementé funciones para:
+
+- Obtener la colección de un usuario.
+- Obtener un videojuego por ID.
+- Agregar un juego a una colección.
+- Actualizar un juego de una colección.
+- Eliminar un juego de una colección.
+
+De esta manera, separé las peticiones a la API de la lógica visual de las distintas páginas.
+
+### Estilos
+En `global.css` desarrollé la parte de estilos correspondiente a mi trabajo, principalmente para los formularios, Dashboard y tarjetas de juegos.
+
+Para mostrar la colección utilicé `CSS Grid`, permitiendo que las tarjetas se adapten automáticamente al tamaño de la pantalla. También utilicé `Flexbox` para organizar los controles de búsqueda, filtros y botones.
+
+Además, agregué estilos y efectos visuales para las `GameCard`, como cambios al pasar el cursor, bordes, espaciado y organización de los botones.

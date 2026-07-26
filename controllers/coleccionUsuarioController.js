@@ -1,6 +1,5 @@
 const { ColeccionUsuario, Usuario, Videojuego } = require("../models");
 
-// ------- POST /coleccion (1. Agregar a colección) --------//
 const agregarAColeccion = async (req, res) => {
   try {
     const { id_usuario, id_videojuego, estado, calificacion, tiempo_jugado } =
@@ -8,12 +7,12 @@ const agregarAColeccion = async (req, res) => {
 
     const usuario = await Usuario.findByPk(id_usuario);
     if (!usuario) {
-      return res.status(404).json({ msg: "Usuario no encontrado" });
+      return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
     const juego = await Videojuego.findByPk(id_videojuego);
     if (!juego) {
-      return res.status(404).json({ msg: "Videojuego no encontrado" });
+      return res.status(404).json({ error: "Videojuego no encontrado" });
     }
 
     const existe = await ColeccionUsuario.findOne({
@@ -22,7 +21,7 @@ const agregarAColeccion = async (req, res) => {
 
     if (existe) {
       return res.status(400).json({
-        msg: "El juego ya está en la colección del usuario",
+        error: "El juego ya está en la colección del usuario",
       });
     }
 
@@ -46,7 +45,6 @@ const agregarAColeccion = async (req, res) => {
   }
 };
 
-// ------- GET /coleccion/:id_usuario (2. Ver colección) --------//
 const obtenerColeccionUsuario = async (req, res) => {
   try {
     const { id_usuario } = req.params;
@@ -72,26 +70,11 @@ const obtenerColeccionUsuario = async (req, res) => {
   }
 };
 
-// ------- PUT /coleccion/:id_usuario/:id_videojuego (3. Actualizar) --------//
 const actualizarJuegoColeccion = async (req, res) => {
   try {
-    const { id_usuario, id_videojuego } = req.params;
     const { estado, calificacion, tiempo_jugado } = req.body;
 
-    const juego = await ColeccionUsuario.findOne({
-      where: {
-        id_usuario: id_usuario,
-        id_videojuego: id_videojuego,
-      },
-    });
-
-    if (!juego) {
-      return res.status(404).json({
-        msg: "Juego no encontrado en la colección",
-      });
-    }
-
-    await juego.update({
+    await req.coleccionExistente.update({
       estado,
       calificacion,
       tiempo_jugado,
@@ -99,7 +82,7 @@ const actualizarJuegoColeccion = async (req, res) => {
 
     return res.status(200).json({
       msg: "Juego actualizado correctamente",
-      juego,
+      juego: req.coleccionExistente,
     });
   } catch (error) {
     console.log(error);
@@ -109,25 +92,9 @@ const actualizarJuegoColeccion = async (req, res) => {
   }
 };
 
-// ------- DELETE /coleccion/:id_usuario/:id_videojuego (4. Eliminar) --------//
 const eliminarJuegoColeccion = async (req, res) => {
   try {
-    const { id_usuario, id_videojuego } = req.params;
-
-    const juego = await ColeccionUsuario.findOne({
-      where: {
-        id_usuario: id_usuario,
-        id_videojuego: id_videojuego,
-      },
-    });
-
-    if (!juego) {
-      return res.status(404).json({
-        msg: "Juego no encontrado en la colección",
-      });
-    }
-
-    await juego.destroy();
+    await req.coleccionExistente.destroy();
 
     return res.status(200).json({
       msg: "Juego eliminado de la colección",

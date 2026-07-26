@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const authRoutes = require('./authRoutes');
 
 const coleccionRoutes = require('./coleccionUsuarioRoutes');
 const videojuegoRoutes = require('./videojuegoRoutes');
@@ -28,5 +29,6 @@ router.get('/test', (req, res) => {
 router.use('/coleccion', coleccionRoutes);
 router.use('/videojuegos', videojuegoRoutes);
 router.use('/usuarios', userRoutes);
+router.use('/auth', authRoutes);
 
 module.exports = router;
